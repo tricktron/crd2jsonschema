@@ -4,3 +4,5 @@ convert()
 {
     echo "hello"
 }
+
+convert
