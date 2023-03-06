@@ -2,9 +2,8 @@
     description               = "crd2jsonschema-dev-shell";
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
-    inputs.my-system.url      = "github:tricktron/my-system-configs";
 
-    outputs = { self, nixpkgs, flake-utils, my-system }:
+    outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -22,6 +21,7 @@
                [
                    (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
                    shellcheck
+                   yq-go
                ];
             };
         }
