@@ -1,3 +1,5 @@
+#!/usr/bin/env bats
+
 setup() {
     bats_load_library bats-support
     bats_load_library bats-assert
@@ -8,6 +10,6 @@ setup() {
 
 @test "should convert crd openapi schema to json" {
     source src/commands/convert.sh
-    run convert
+    run convert 
     assert_output "hello"
 }

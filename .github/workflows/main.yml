@@ -36,5 +36,8 @@ jobs:
       - name: Cache Dev Shell
         run: nix develop
 
+      - name: Shellcheck Tests
+        run: nix develop -c shellcheck -x test/*.bats
+
       - name: Run Tests
         run: nix develop -c bats test
