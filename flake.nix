@@ -15,6 +15,13 @@
         let pkgs = nixpkgs.legacyPackages.${system};
         in
         {
+            packages.default      = pkgs.writeShellApplication
+            {
+                name = "crd2jsonschema.sh";
+                runtimeInputs = with pkgs; [ bash yq-go ];
+                text = builtins.readFile ./src/crd2jsonschema.sh;
+            };
+
             devShells.default     = pkgs.mkShell
             {
                packages = with pkgs;

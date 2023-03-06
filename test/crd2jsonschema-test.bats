@@ -9,8 +9,7 @@ setup() {
 }
 
 @test "should convert crd openapi schema to json" {
-    source "$PROJECT_ROOT"/src/commands/convert.sh
-    run convert_to_json "$PROJECT_ROOT"/test/fixtures/openshift-route.yml
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh convert "$PROJECT_ROOT"/test/fixtures/openshift-route.yml
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/openshift-route-expected.json)"
 }
 

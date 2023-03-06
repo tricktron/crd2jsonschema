@@ -18,9 +18,14 @@ Available Commands:
   exit 1
 }
 
+convert_to_json()
+{
+    yq -o json -P '.spec.versions[0].schema.openAPIV3Schema' "$1"
+}
+
 case "$1" in
     "convert")
-        "$WORKDIR"/commands/convert.sh 
+        convert_to_json "$2"
         ;;
     "version")
         echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
