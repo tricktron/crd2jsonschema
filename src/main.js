@@ -1,11 +1,11 @@
-const toJsonSchema    = require("@openapi-contrib/openapi-schema-to-json-schema");
-const fs              = require('fs');
+const toJsonSchemaDraft4 = require("@openapi-contrib/openapi-schema-to-json-schema");
+const fs                 = require('fs');
 
 try
 {
-    const input           = fs.readFileSync(0, 'utf-8');
-    const convertedSchema = toJsonSchema(JSON.parse(input.toString()));
-    console.log(JSON.stringify(convertedSchema, null, 4));
+    const openapiV3Schema    = fs.readFileSync(0, 'utf-8');
+    const jsonSchemaDraft4   = toJsonSchemaDraft4(JSON.parse(openapiV3Schema.toString()));
+    console.log(JSON.stringify(jsonSchemaDraft4, null, 4));
     process.exit();
 
 } catch (error)
