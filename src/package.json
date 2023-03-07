@@ -1,0 +1,8 @@
+{
+    "name": "openapi-schema-to-json-schema",
+    "version": "3.2.0",
+    "dependencies": {
+        "@openapi-contrib/openapi-schema-to-json-schema": "^3.2.0"
+    },
+    "main": "main.js"
+}

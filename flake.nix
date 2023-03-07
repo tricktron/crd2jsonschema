@@ -12,14 +12,36 @@
         "x86_64-darwin"
     ]
     (system:
-        let pkgs = nixpkgs.legacyPackages.${system};
+        let 
+            pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-            packages.default      = pkgs.writeShellApplication
+            packages = 
             {
-                name = "crd2jsonschema.sh";
-                runtimeInputs = with pkgs; [ bash yq-go ];
-                text = builtins.readFile ./src/crd2jsonschema.sh;
+                default = pkgs.writeShellApplication
+                {
+                    name = "crd2jsonschema.sh";
+                    runtimeInputs = with pkgs; [ bash yq-go ];
+                    text = builtins.readFile ./src/crd2jsonschema.sh;
+                };
+                openapi-schema-to-json-schema = pkgs.buildNpmPackage rec
+                {
+                    version = "3.2.0";
+                    name = "openapi-schema-to-json-schema";
+                    src = builtins.filterSource(path: type:
+                        type == "regular" && 
+                        (builtins.elem (baseNameOf path) [ "package.json" "package-lock.json" "main.js"]))
+                        ./src;
+                    npmDepsHash = "sha256-hmPm6CWk9gnBizNA/304kxSNTJUex7AgXUyFhjdxqcI=";
+                    dontNpmBuild = true;
+                    postInstall = 
+                    ''
+                        mkdir -p $out/bin
+                        chmod +x $out/lib/node_modules/${name}/main.js
+                        ln -s $out/lib/node_modules/${name}/main.js $out/bin/${name}
+                    '';
+                };
+
             };
 
             devShells.default     = pkgs.mkShell
@@ -29,6 +51,7 @@
                    (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
                    shellcheck
                    yq-go
+                   nodejs
                ];
             };
         }
