@@ -47,7 +47,8 @@
                 "type": "integer",
                 "format": "int32"
               }
-            }
+            },
+            "additionalProperties": false
           }
         },
         "host": {
@@ -77,7 +78,8 @@
               ],
               "x-kubernetes-int-or-string": true
             }
-          }
+          },
+          "additionalProperties": false
         },
         "subdomain": {
           "description": "subdomain is a DNS subdomain that is requested within the ingress controller's domain (as a subdomain). If host is set this field is ignored. An ingress controller may choose to ignore this suggested name, in which case the controller will report the assigned name in the status.ingress array or refuse to admit the route. If this value is set and the server does not support this field host will be populated automatically. Otherwise host is left empty. The field may have multiple parts separated by a dot, but not all ingress controllers may honor the request. This field may not be changed after creation except by a user with the update routes/custom-host permission. \n Example: subdomain `frontend` automatically receives the router subdomain `apps.mycluster.com` to have a full hostname `frontend.apps.mycluster.com`.",
@@ -114,7 +116,8 @@
               "description": "termination indicates termination type. \n * edge - TLS termination is done by the router and http is used to communicate with the backend (default) * passthrough - Traffic is sent straight to the destination without the router providing TLS termination * reencrypt - TLS termination is done by the router and https is used to communicate with the backend",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "to": {
           "description": "to is an object the route should use as the primary backend. Only the Service kind is allowed, and it will be defaulted to Service. If the weight field (0-256 default 100) is set to zero, no traffic will be sent to this backend.",
@@ -137,13 +140,15 @@
               "type": "integer",
               "format": "int32"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "wildcardPolicy": {
           "description": "Wildcard policy if any for the route. Currently only 'Subdomain' or 'None' is allowed.",
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "status": {
       "description": "status is the current state of the route",
@@ -188,7 +193,8 @@
                       "description": "Type is the type of the condition. Currently only Admitted.",
                       "type": "string"
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               },
               "host": {
@@ -207,10 +213,13 @@
                 "description": "Wildcard policy is the wildcard policy that was allowed where this route is exposed.",
                 "type": "string"
               }
-            }
+            },
+            "additionalProperties": false
           }
         }
-      }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "additionalProperties": false
 }

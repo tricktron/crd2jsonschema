@@ -7,7 +7,7 @@ export WORKDIR
 
 cli_help() {
     echo "
-crd2jsonschema converts Kubernetes Custom Resource Definitions (CRDs) to JSON schemas.
+crd2jsonschema converts Kubernetes Custom Resource Definitions (CRDs) to JSON schema draft 4.
 Version: $(cat "$WORKDIR"/VERSION)
 Usage: crd2jsonschema [command]
 Available Commands:
@@ -20,7 +20,11 @@ Available Commands:
 
 convert_to_json()
 {
-    yq -o json -P '.spec.versions[0].schema.openAPIV3Schema' "$1"
+    yq '.spec.versions.0.schema.openAPIV3Schema' "$1" | yq 'with(.. | 
+        select(has("properties")) | 
+        select(has("additionalProperties") | not); 
+        .additionalProperties = false)' | 
+        yq -o json -P
 }
 
 case "$1" in
