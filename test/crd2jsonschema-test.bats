@@ -8,8 +8,10 @@ setup() {
     PATH="$PROJECT_ROOT:$PATH"
 }
 
-@test "should convert crd openapi schema yaml to json schema draft4 disallowing additional properties NOT defined in the schema" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh convert "$PROJECT_ROOT"/test/fixtures/openshift-route.yml
+@test "should convert Openapi V3 YAML to Openapi V3 JSON disallowing additional properties NOT defined in the schema" {
+    . "$PROJECT_ROOT"/src/crd2jsonschema.sh
+
+    run convert_to_strict_json "$PROJECT_ROOT"/test/fixtures/openshift-route.yml
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/openshift-route-strict-expected.json)"
 }
 
@@ -20,10 +22,10 @@ setup() {
 }
 
 @test "should print help" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh help
+    . "$PROJECT_ROOT"/src/crd2jsonschema.sh
+    run cli_help
     assert_output "
 crd2jsonschema converts Kubernetes Custom Resource Definitions (CRDs) to JSON schema draft 4.
-Version: 0.1.0
 Usage: crd2jsonschema [command]
 Available Commands:
   convert   Convert

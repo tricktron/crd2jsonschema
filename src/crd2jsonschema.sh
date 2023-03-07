@@ -2,13 +2,10 @@
 
 set -eo pipefail
 
-WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export WORKDIR
 
-function help() {
+function cli_help() {
     echo "
 crd2jsonschema converts Kubernetes Custom Resource Definitions (CRDs) to JSON schema draft 4.
-Version: $(cat "$WORKDIR"/VERSION)
 Usage: crd2jsonschema [command]
 Available Commands:
   convert   Convert
@@ -27,7 +24,7 @@ function convert_to_strict_json()
         yq -o json -P
 }
 
-function run()
+function main()
 {
     case "$1" in
     "convert")
@@ -37,9 +34,15 @@ function run()
         echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
         ;;
     *)
-        help
+        cli_help
         ;;
 esac
 }
 
-run "$@"
+WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export WORKDIR
+
+if [ "${BASH_SOURCE[0]}" -ef "$0" ]
+then
+    main "$@"
+fi
