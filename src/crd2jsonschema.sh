@@ -21,7 +21,7 @@ function convert_to_strict_json()
         select(has("properties")) | 
         select(has("additionalProperties") | not); 
         .additionalProperties = false)' | 
-        yq -o json -P
+        yq -o json -I 4
 }
 
 function main()
