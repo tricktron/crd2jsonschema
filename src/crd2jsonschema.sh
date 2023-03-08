@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -euo pipefail
 
 
 function cli_help() {
@@ -24,13 +24,18 @@ function convert_to_strict_json()
         yq -o json -I 4
 }
 
+function convert_to_jsonschema4()
+{
+    echo "$1" | main.js
+}
+
 function main()
 {
     case "$1" in
     "convert")
-        convert_to_strict_json "$2"
+        convert_to_jsonschema4 "$(convert_to_strict_json "$2")"
         ;;
-    "version")
+        "version")
         echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
         ;;
     *)

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const toJsonSchemaDraft4 = require("@openapi-contrib/openapi-schema-to-json-schema");
 const fs                 = require('fs');
 
