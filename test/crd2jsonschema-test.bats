@@ -25,10 +25,16 @@ setup() {
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }
 
-@test "should convert Openapi V3 YAML CRD to JSON schema draft 4" {
+@test "should convert single Openapi V3 YAML CRD to JSON schema draft 4" {
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh convert "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
+}
+
+@test "should convert multiple Openapi V3 YAML CRDs to JSON schema draft 4" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh convert "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecrets-v1alpha1.crd.yml
+    
+    assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json && cat "$PROJECT_ROOT"/test/fixtures/expected-bitnami-sealedsecrets-jsonschema4.json)"
 }
 
 @test "should print version" {

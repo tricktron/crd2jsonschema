@@ -32,7 +32,11 @@ function main()
 {
     case "$1" in
     "convert")
-        convert_to_strict_json "$2" | convert_to_jsonschema4
+        shift
+        for crd in "$@"
+        do 
+            convert_to_strict_json "$crd" | convert_to_jsonschema4
+        done
         ;;
         "version")
         echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
