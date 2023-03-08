@@ -18,8 +18,9 @@ setup() {
 
 @test "should convert Openapi V3 JSON to JSON schema draft 4" {
     . "$PROJECT_ROOT"/src/crd2jsonschema.sh
+    export -f convert_to_jsonschema4
 
-    run convert_to_jsonschema4 "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-strict-openapi3.json)"
+    run bash -c "cat $PROJECT_ROOT/test/fixtures/expected-openshift-route-strict-openapi3.json | convert_to_jsonschema4"
 
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }

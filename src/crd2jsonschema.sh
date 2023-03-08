@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-
 function cli_help() {
     echo "
 crd2jsonschema converts Kubernetes Custom Resource Definitions (CRDs) to JSON schema draft 4.
@@ -17,23 +16,23 @@ Available Commands:
 
 function convert_to_strict_json()
 {
-    yq '.spec.versions.0.schema.openAPIV3Schema' "$1" | yq 'with(.. | 
+    yq -e '.spec.versions.0.schema.openAPIV3Schema' "$1" | yq -e 'with(.. | 
         select(has("properties")) | 
         select(has("additionalProperties") | not); 
         .additionalProperties = false)' | 
-        yq -o json -I 4
+        yq -e -o json -I 4
 }
 
 function convert_to_jsonschema4()
 {
-    echo "$1" | main.js
+    cat | main.js
 }
 
 function main()
 {
     case "$1" in
     "convert")
-        convert_to_jsonschema4 "$(convert_to_strict_json "$2")"
+        convert_to_strict_json "$2" | convert_to_jsonschema4
         ;;
         "version")
         echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
