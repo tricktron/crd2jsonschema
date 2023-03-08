@@ -34,7 +34,7 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
       - name: Cache Dev Shell & Install Npm Dependencies
-        run: nix develop && cd src && npm install
+        run: nix develop && cd src && npm ci
 
       - name: Shellcheck Tests
         run: nix develop -c shellcheck -x test/*.bats
