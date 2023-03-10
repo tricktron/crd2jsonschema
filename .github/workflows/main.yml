@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: 2
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Install Nix with Flakes Support and Haskell Nix Binary Cache
+        uses: cachix/install-nix-action@v19
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.13.3/install
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            substituters = https://hydra.iohk.io https://cache.nixos.org
+            trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            allowed-users = *
+      - name: Use Cachix to Pull and Push Binary Cache
+        uses: cachix/cachix-action@v12
+        with:
+          name: tricktron
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+      - name: Cache Dev Shell & Install Npm Dependencies
+        run: nix develop && cd src && npm ci
+
+      - name: Shellcheck Tests
+        run: nix develop -c shellcheck -x test/*.bats
+
+      - name: Shellcheck Src
+        run: nix develop -c shellcheck -x src/*.sh
+
+      - name: Install openapi-schema-to-json-schema
+        run: nix develop 
+
+      - name: Run Tests
+        run: nix develop -c bats test
+
+      - name: Generate Coverage
+        run: nix develop -c kcov --clean --include-pattern=.sh --exclude-pattern=bats --include-path=src coverage bats test
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: coverage
+          fail_ci_if_error: true
+          verbose: true

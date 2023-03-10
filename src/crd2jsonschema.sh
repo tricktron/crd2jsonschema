@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+function cli_help()
+{
+    cat << EOF
+
+Converts Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to JSON schema draft 4.
+
+Usage: crd2jsonschema [command]
+
+Available Commands:
+  convert   Convert CRDs OpenAPI V3.0 schemas to JSON schema draft 4
+  version   Print the version of crd2jsonschema
+  *         Help
+EOF
+}
+
+function get_openapi_v3_schema()
+{
+    yq -e '.spec.versions[0].schema.openAPIV3Schema' "$1"
+}
+
+function convert_to_strict_json()
+{
+    yq -e -o json -I 4 '
+        with(.. | select(has("properties")) | 
+        select(has("additionalProperties") | not); 
+            .additionalProperties = false)
+    '
+}
+
+function convert_to_jsonschema4()
+{
+    cat | main.js
+}
+
+function main()
+{
+    local OUTPUT_DIR=">&2"
+    case "$1" in
+    "convert")
+        shift
+        for crd in "$@"
+        do 
+            get_openapi_v3_schema "$crd" | \
+            convert_to_strict_json | \
+            convert_to_jsonschema4 "$OUTPUT_DIR"
+        done
+        ;;
+        "version")
+        echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
+        ;;
+    *)
+        cli_help && exit 1
+        ;;
+esac
+}
+
+WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export WORKDIR
+
+if [ "${BASH_SOURCE[0]}" -ef "$0" ]
+then
+    main "$@"
+fi
