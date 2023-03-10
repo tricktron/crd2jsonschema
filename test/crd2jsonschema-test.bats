@@ -10,8 +10,11 @@ setup() {
 
 @test "should convert Openapi V3 YAML to Openapi V3 JSON disallowing additional properties NOT defined in the schema" {
     . "$PROJECT_ROOT"/src/crd2jsonschema.sh
-
-    run convert_to_strict_json "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
+    export -f convert_to_strict_json get_openapi_v3_schema
+    
+    run bash -c "get_openapi_v3_schema \
+        $PROJECT_ROOT/test/fixtures/openshift-route-v1.crd.yml | \
+        convert_to_strict_json"
 
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-strict-openapi3.json)"
 }

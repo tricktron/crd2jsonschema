@@ -15,14 +15,18 @@ Available Commands:
 EOF
 }
 
+function get_openapi_v3_schema()
+{
+    yq -e '.spec.versions[0].schema.openAPIV3Schema' "$1"
+}
+
 function convert_to_strict_json()
 {
     yq -e -o json -I 4 '
-        .spec.versions.0.schema.openAPIV3Schema |
         with(.. | select(has("properties")) | 
         select(has("additionalProperties") | not); 
             .additionalProperties = false)
-    ' "$1"
+    '
 }
 
 function convert_to_jsonschema4()
@@ -38,7 +42,9 @@ function main()
         shift
         for crd in "$@"
         do 
-            convert_to_strict_json "$crd" | convert_to_jsonschema4 "$OUTPUT_DIR"
+            get_openapi_v3_schema "$crd" | \
+            convert_to_strict_json | \
+            convert_to_jsonschema4 "$OUTPUT_DIR"
         done
         ;;
         "version")
