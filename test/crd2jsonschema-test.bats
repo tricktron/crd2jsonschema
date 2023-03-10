@@ -52,10 +52,12 @@ setup() {
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh foo
 
     assert_output "
-crd2jsonschema converts Kubernetes Custom Resource Definitions (CRDs) to JSON schema draft 4.
+Converts Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to JSON schema draft 4.
+
 Usage: crd2jsonschema [command]
+
 Available Commands:
-  convert   Convert
+  convert   Convert CRDs OpenAPI V3.0 schemas to JSON schema draft 4
   version   Print the version of crd2jsonschema
   *         Help"
 }
