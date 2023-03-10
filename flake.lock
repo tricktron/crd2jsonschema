@@ -17,11 +17,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1678093797,
-        "narHash": "sha256-9O+hBOOlfXFmqXiNRhubzrM5EWXgsoLSPqk+jn7QNQg=",
+        "lastModified": 1678455506,
+        "narHash": "sha256-Bx3kjT/323qE1N94iNUm0rhj8e8NdhQ+Jl8MkZ7gHgw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "aecb04e7ab49b94b9601cebf957bd7b7820d822d",
+        "rev": "f991762ea1345d850c06cd9947700f3b08a12616",
         "type": "github"
       },
       "original": {
@@ -30,10 +30,27 @@
         "type": "github"
       }
     },
+    "nixpkgs-fork": {
+      "locked": {
+        "lastModified": 1678446637,
+        "narHash": "sha256-m2c/S4WYLdHde01Yzab3J6Nqtk5cj60opFmlFJ3tSW0=",
+        "owner": "tricktron",
+        "repo": "nixpkgs",
+        "rev": "b5d534566ab71e4c9d598ae1a4b4855efa640eb0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tricktron",
+        "ref": "f-kcov-41",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-fork": "nixpkgs-fork"
       }
     }
   },

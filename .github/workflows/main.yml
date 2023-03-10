@@ -47,3 +47,14 @@ jobs:
 
       - name: Run Tests
         run: nix develop -c bats test
+
+      - name: Generate Coverage
+        run: nix develop -c kcov --clean --include-pattern=.sh --exclude-pattern=bats --include-path=src coverage bats test
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: coverage
+          fail_ci_if_error: true
+          verbose: true

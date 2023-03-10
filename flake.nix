@@ -2,8 +2,9 @@
     description               = "crd2jsonschema-dev-shell";
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
+    inputs.nixpkgs-fork.url   = "github:tricktron/nixpkgs/f-kcov-41";
 
-    outputs = { self, nixpkgs, flake-utils }:
+    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -14,6 +15,7 @@
     (system:
         let 
             pkgs        = nixpkgs.legacyPackages.${system};
+            pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
             runtimeDeps = with pkgs; 
             [ 
                 bash 
@@ -62,6 +64,9 @@
                    shellcheck
                    yq-go
                    nodejs
+                   kubernetes-controller-tools
+                   go
+                   pkgs-fork.kcov
                ];
             };
         }
