@@ -6,11 +6,12 @@ function cli_help()
 {
     cat << EOF
 
-Converts Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to JSON schema draft 4.
+Usage: crd2jsonschema [options] [command]
 
-Usage: crd2jsonschema [command]
+Options:
+  -o path  Output directory for JSON schema files
 
-Available Commands:
+Commands:
   convert   Convert CRDs OpenAPI V3.0 schemas to JSON schema draft 4
   version   Print the version of crd2jsonschema
   *         Help
@@ -38,15 +39,29 @@ function convert_to_jsonschema4()
 
 function main()
 {
-    local OUTPUT_DIR=">&2"
+    local OUTPUT_DIR="/dev/stdout"
+    while getopts :o: option
+    do
+    case "$option" in
+        o)
+            OUTPUT_DIR="$OPTARG/route_v1.json"
+            ;;
+        \?)
+            printf "\nOption does not exist : %s\n" "$1"; cli_help; exit 0
+            ;;
+    esac
+    done
+    
+    shift $((OPTIND-1))
+
     case "$1" in
     "convert")
         shift
         for crd in "$@"
-        do 
+        do
             get_openapi_v3_schema "$crd" | \
             convert_to_strict_json | \
-            convert_to_jsonschema4 "$OUTPUT_DIR"
+            convert_to_jsonschema4 > "$OUTPUT_DIR"
         done
         ;;
         "version")

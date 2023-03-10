@@ -59,15 +59,16 @@
             devShells.default = pkgs.mkShell
             {
                packages = with pkgs;
-               [
-                   (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
-                   shellcheck
-                   yq-go
-                   nodejs
-                   kubernetes-controller-tools
-                   go
-                   pkgs-fork.kcov
-               ];
+                [
+                    (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
+                    shellcheck
+                    yq-go
+                    nodejs
+                    kubernetes-controller-tools
+                    go
+                ] ++ pkgs.lib.optionals 
+                    (system == "x86_64-linux" || system == "aarch64-linux") 
+                [ pkgs-fork.kcov ];
             };
         }
     );
