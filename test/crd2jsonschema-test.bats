@@ -40,15 +40,13 @@ setup() {
 @test "should print version" {
     VERSION="$(cat "$PROJECT_ROOT"/src/VERSION)"
 
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh version
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh "version"
 
     assert_output "crd2jsonschema version $VERSION"
 }
 
-@test "should print help" {
-    . "$PROJECT_ROOT"/src/crd2jsonschema.sh
-
-    run cli_help
+@test "should print help given unknown command" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh foo
 
     assert_output "
 crd2jsonschema converts Kubernetes Custom Resource Definitions (CRDs) to JSON schema draft 4.
