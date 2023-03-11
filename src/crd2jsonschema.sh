@@ -9,7 +9,7 @@ function cli_help()
 Usage: crd2jsonschema [options] [command]
 
 Options:
-  -o path  Output directory for JSON schema files
+  -o path   Output directory for JSON schema files
 
 Commands:
   convert   Convert CRDs OpenAPI V3.0 schemas to JSON schema draft 4
