@@ -37,6 +37,13 @@ function convert_to_jsonschema4()
     cat | main.js
 }
 
+function convert_crd_openapiv3_schema_to_jsonschema()
+{
+    get_openapi_v3_schema "$1" | \
+        convert_to_strict_json | \
+        convert_to_jsonschema4
+}
+
 function main()
 {
     local OUTPUT_DIR="/dev/stdout"
@@ -55,22 +62,20 @@ function main()
     shift $((OPTIND-1))
 
     case "$1" in
-    "convert")
-        shift
-        for crd in "$@"
-        do
-            get_openapi_v3_schema "$crd" | \
-            convert_to_strict_json | \
-            convert_to_jsonschema4 > "$OUTPUT_DIR"
-        done
-        ;;
+        "convert")
+            shift
+            for crd in "$@"
+            do
+                convert_crd_openapiv3_schema_to_jsonschema "$crd" > "$OUTPUT_DIR"
+            done
+            ;;
         "version")
-        echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
-        ;;
-    *)
-        cli_help && exit 1
-        ;;
-esac
+            echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
+            ;;
+        *)
+            cli_help && exit 1
+            ;;
+    esac
 }
 
 WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
