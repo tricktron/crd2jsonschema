@@ -23,6 +23,16 @@ function get_openapi_v3_schema()
     yq -e '.spec.versions[0].schema.openAPIV3Schema' "$1"
 }
 
+function get_jsonschema_file_name()
+{
+    local CRD_KIND
+    CRD_KIND="$(yq -e '.spec.names.singular' "$1")"
+    local CRD_VERSION
+    CRD_VERSION="$(yq -e '.spec.versions[0].name' "$1")"
+    echo "${CRD_KIND}_${CRD_VERSION}.json"
+}
+
+
 function convert_to_strict_json()
 {
     yq -e -o json -I 4 '
@@ -44,17 +54,18 @@ function convert_crd_openapiv3_schema_to_jsonschema()
         convert_to_jsonschema4
 }
 
+
 function main()
 {
-    local OUTPUT_DIR="/dev/stdout"
+    local OUTPUT_DIR
     while getopts :o: option
     do
     case "$option" in
         o)
-            OUTPUT_DIR="$OPTARG/route_v1.json"
+            OUTPUT_DIR="$OPTARG"
             ;;
         \?)
-            printf "\nOption does not exist : %s\n" "$1"; cli_help; exit 0
+            printf "\nOption does not exist : %s\n" "$1" >&2; cli_help; exit 0
             ;;
     esac
     done
@@ -65,8 +76,13 @@ function main()
         "convert")
             shift
             for crd in "$@"
-            do
-                convert_crd_openapiv3_schema_to_jsonschema "$crd" > "$OUTPUT_DIR"
+            do  
+                if [[ -d "${OUTPUT_DIR-:}" ]]; then
+                    JSON_SCHEMA_FILE_NAME="$(get_jsonschema_file_name "$crd")"
+                    convert_crd_openapiv3_schema_to_jsonschema "$crd" > "$OUTPUT_DIR/$JSON_SCHEMA_FILE_NAME"
+                else
+                    convert_crd_openapiv3_schema_to_jsonschema "$crd"
+                fi
             done
             ;;
         "version")
