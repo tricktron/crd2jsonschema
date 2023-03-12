@@ -23,7 +23,7 @@ function get_openapi_v3_schema()
     local crd
     crd="$1"
     yq -e '.spec.versions[0].schema.openAPIV3Schema' "$crd" 2>/dev/null || \
-        echo "OpenAPI V3 schema not found. Is $crd a CRD?" >&2
+        { echo "OpenAPI V3 schema not found. Is $crd a CRD?" >&2; exit 1; }
 }
 
 function get_crd_kind()
@@ -69,8 +69,12 @@ function convert_to_jsonschema4()
 
 function convert_crd_openapiv3_schema_to_jsonschema()
 {
-    openapiv3_schema="$(get_openapi_v3_schema "$1")"
-    strict_schema="$(echo "$openapiv3_schema" | convert_to_strict_json)"
+    local crd
+    crd="$1"
+    local openapiv3_schema
+    openapiv3_schema="$(get_openapi_v3_schema "$1")" || exit 1
+    local strict_schema
+    strict_schema="$(echo "$openapiv3_schema" | convert_to_strict_json)" || exit 1
     echo "$strict_schema" | convert_to_jsonschema4
 }
 
@@ -85,7 +89,7 @@ function main()
             OUTPUT_DIR="$OPTARG"
             ;;
         \?)
-            printf "\nOption does not exist : %s\n" "$1" >&2; cli_help; exit 0
+            printf "\nOption does not exist : %s\n" "$1" >&2; cli_help; exit 1
             ;;
     esac
     done
@@ -98,8 +102,9 @@ function main()
             for crd in "$@"
             do  
                 if [[ -d "${OUTPUT_DIR-:}" ]]; then
-                    JSON_SCHEMA_FILE_NAME="$(get_jsonschema_file_name "$crd")"
-                    convert_crd_openapiv3_schema_to_jsonschema "$crd" > "$OUTPUT_DIR/$JSON_SCHEMA_FILE_NAME"
+                    json_schema_filename="$(get_jsonschema_file_name "$crd")"
+                    json_schema="$(convert_crd_openapiv3_schema_to_jsonschema "$crd")"
+                    echo "$json_schema" > "$OUTPUT_DIR/$json_schema_filename"
                 else
                     convert_crd_openapiv3_schema_to_jsonschema "$crd"
                 fi

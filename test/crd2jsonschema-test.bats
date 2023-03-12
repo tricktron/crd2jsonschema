@@ -65,18 +65,30 @@ teardown() {
     . "$PROJECT_ROOT"/src/crd2jsonschema.sh
     crd_without_kind="$PROJECT_ROOT/test/fixtures/bitnami-sealedsecret-without-kind.yml"
 
-    run get_jsonschema_file_name "$crd_without_kind"
+    run get_crd_kind "$crd_without_kind"
     assert_failure
-    assert_output ".spec.names.singular not found. Is $crd_without_kind a valid CRD?"
+    assert_output "null
+.spec.names.singular not found. Is $crd_without_kind a valid CRD?"
 }
 
 @test "should exit if crd has no version metadata" {
     . "$PROJECT_ROOT"/src/crd2jsonschema.sh
     crd_without_version="$PROJECT_ROOT/test/fixtures/bitnami-sealedsecret-without-version.yml"
 
-    run get_jsonschema_file_name "$crd_without_version"
+    run get_crd_version "$crd_without_version"
     assert_failure
-    assert_output ".spec.versions[0].name not found. Is $crd_without_version a valid CRD?"
+    assert_output "null
+.spec.versions[0].name not found. Is $crd_without_version a valid CRD?"
+}
+
+@test "should exit if crd has no OpenAPI V3 schema" {
+    . "$PROJECT_ROOT"/src/crd2jsonschema.sh
+    crd_without_openapi_v3_schema="$PROJECT_ROOT/test/fixtures/bitnami-sealedsecret-without-openapiv3schema.yml"
+
+    run get_openapi_v3_schema "$crd_without_openapi_v3_schema"
+    assert_failure
+    assert_output "null
+OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a CRD?"
 }
 
 @test "should convert multiple OpenAPI V3 YAML CRDs to JSON schema and write to files in given output directory" {
@@ -113,6 +125,7 @@ teardown() {
 @test "should print help given unknown command" {
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh foo
 
+    assert_failure
     assert_output "
 Usage: crd2jsonschema [options] [command]
 
@@ -129,6 +142,7 @@ Commands:
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh -foo convert \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
+    assert_failure
     assert_output "
 Option does not exist : -foo
 
