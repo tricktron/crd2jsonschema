@@ -3,8 +3,9 @@
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
     inputs.nixpkgs-fork.url   = "github:tricktron/nixpkgs/f-kcov-41";
+    inputs.nixpkgs-bats.url   = "github:tricktron/nixpkgs/f-bats-1.9.0";
 
-    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork }:
+    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, nixpkgs-bats }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -16,6 +17,7 @@
         let 
             pkgs        = nixpkgs.legacyPackages.${system};
             pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
+            pkgs-bats   = nixpkgs-bats.legacyPackages.${system};
             runtimeDeps = with pkgs; 
             [ 
                 bash 
@@ -59,15 +61,17 @@
             devShells.default = pkgs.mkShell
             {
                packages = with pkgs;
-               [
-                   (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
-                   shellcheck
-                   yq-go
-                   nodejs
-                   kubernetes-controller-tools
-                   go
-                   pkgs-fork.kcov
-               ];
+                [
+                    shellcheck
+                    yq-go
+                    nodejs
+                    kubernetes-controller-tools
+                    go
+                [   (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
+                ] 
+                ++ pkgs.lib.optionals 
+                    (system == "x86_64-linux" || system == "aarch64-linux") 
+                [ pkgs-fork.kcov ];
             };
         }
     );
