@@ -37,14 +37,14 @@ teardown() {
 }
 
 @test "should convert single OpenAPI V3 YAML CRD to JSON schema draft 4" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh convert \
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }
 
 @test "should convert single OpenAPI V3 YAML CRD to JSON schema and write to file in given output directory" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" convert \
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
     assert_file_exist "$TEST_TEMP_DIR"/route_v1.json
@@ -92,7 +92,7 @@ OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a CRD?"
 }
 
 @test "should exit if output directory does not exist" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR"/non-existing-dir convert \
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR"/non-existing-dir \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
     assert_failure
@@ -101,7 +101,7 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
 }
 
 @test "should convert multiple OpenAPI V3 YAML CRDs to JSON schema and write to files in given output directory" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" convert \
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml \
         "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml
 
@@ -115,7 +115,7 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
 }
 
 @test "should convert multiple OpenAPI V3 YAML CRDs to JSON schema draft 4" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh convert \
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml \
         "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml
     
@@ -123,28 +123,27 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
         && cat "$PROJECT_ROOT"/test/fixtures/expected-bitnami-sealedsecret-jsonschema4.json)"
 }
 
-@test "should print version" {
-    VERSION="$(cat "$PROJECT_ROOT"/src/VERSION)"
+@test "should print help given -h option" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -h
 
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh "version"
-
-    assert_output "crd2jsonschema version $VERSION"
-}
-
-@test "should print help given unknown command" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh foo
-
-    assert_failure
     assert_output "
-Usage: crd2jsonschema [options] [command] [crd]...
+Usage: crd2jsonschema [options] [crd]...
+
+Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
+JSON schema draft 4.
 
 Options:
   -o path   Output directory for JSON schema files
+  -v        Print the version of crd2jsonschema
+  -h        Print this help"
+}
 
-Commands:
-  convert   Convert CRDs OpenAPI V3.0 schemas to JSON schema draft 4
-  version   Print the version of crd2jsonschema
-  *         Help"
+@test "should print version given -v option" {
+    VERSION="$(cat "$PROJECT_ROOT"/src/VERSION)"
+
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -v
+
+    assert_output "crd2jsonschema version $VERSION"
 }
 
 @test "should print help given unknown option" {
@@ -155,14 +154,13 @@ Commands:
     assert_output "
 Option does not exist : -foo
 
-Usage: crd2jsonschema [options] [command] [crd]...
+Usage: crd2jsonschema [options] [crd]...
+
+Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
+JSON schema draft 4.
 
 Options:
   -o path   Output directory for JSON schema files
-
-Commands:
-  convert   Convert CRDs OpenAPI V3.0 schemas to JSON schema draft 4
-  version   Print the version of crd2jsonschema
-  *         Help"
-    
+  -v        Print the version of crd2jsonschema
+  -h        Print this help"
 }

@@ -6,15 +6,16 @@ function cli_help()
 {
     cat << EOF
 
-Usage: crd2jsonschema [options] [command] [crd]...
+Usage: crd2jsonschema [options] [crd]...
+
+Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
+JSON schema draft 4.
 
 Options:
   -o path   Output directory for JSON schema files
+  -v        Print the version of crd2jsonschema
+  -h        Print this help
 
-Commands:
-  convert   Convert CRDs OpenAPI V3.0 schemas to JSON schema draft 4
-  version   Print the version of crd2jsonschema
-  *         Help
 EOF
 }
 
@@ -82,14 +83,21 @@ function convert_crd_openapiv3_schema_to_jsonschema()
 function main()
 {
     local OUTPUT_DIR
-    while getopts :o: option
+    while getopts :o:vh option
     do
     case "$option" in
         o)
             OUTPUT_DIR="$OPTARG"
             if [[ ! -d "${OUTPUT_DIR}" ]]; then
-                printf "\nOutput directory does not exist: %s\n" "$OUTPUT_DIR" >&2; exit 1
+                printf "\nOutput directory does not exist: %s\n" "$OUTPUT_DIR" >&2
+                exit 1
             fi
+            ;;
+        v)
+            echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
+            ;;
+        h)
+            cli_help; exit 0
             ;;
         \?)
             printf "\nOption does not exist : %s\n" "$1" >&2; cli_help; exit 1
@@ -99,27 +107,16 @@ function main()
     
     shift $((OPTIND-1))
 
-    case "$1" in
-        "convert")
-            shift
-            for crd in "$@"
-            do  
-                if [[ -d "${OUTPUT_DIR-:}" ]]; then
-                    json_schema_filename="$(get_jsonschema_file_name "$crd")"
-                    json_schema="$(convert_crd_openapiv3_schema_to_jsonschema "$crd")"
-                    echo "$json_schema" > "$OUTPUT_DIR/$json_schema_filename"
-                else
-                    convert_crd_openapiv3_schema_to_jsonschema "$crd"
-                fi
-            done
-            ;;
-        "version")
-            echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
-            ;;
-        *)
-            cli_help && exit 1
-            ;;
-    esac
+    for crd in "$@"
+    do  
+        if [[ -d "${OUTPUT_DIR-:}" ]]; then
+            json_schema_filename="$(get_jsonschema_file_name "$crd")"
+            json_schema="$(convert_crd_openapiv3_schema_to_jsonschema "$crd")"
+            echo "$json_schema" > "$OUTPUT_DIR/$json_schema_filename"
+        else
+            convert_crd_openapiv3_schema_to_jsonschema "$crd"
+        fi
+    done
 }
 
 WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
