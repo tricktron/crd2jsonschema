@@ -87,6 +87,9 @@ function main()
     case "$option" in
         o)
             OUTPUT_DIR="$OPTARG"
+            if [[ ! -d "${OUTPUT_DIR}" ]]; then
+                printf "\nOutput directory does not exist: %s\n" "$OUTPUT_DIR" >&2; exit 1
+            fi
             ;;
         \?)
             printf "\nOption does not exist : %s\n" "$1" >&2; cli_help; exit 1

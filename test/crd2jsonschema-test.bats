@@ -91,6 +91,15 @@ teardown() {
 OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a CRD?"
 }
 
+@test "should exit if output directory does not exist" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR"/non-existing-dir convert \
+        "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
+
+    assert_failure
+    assert_output "
+Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
+}
+
 @test "should convert multiple OpenAPI V3 YAML CRDs to JSON schema and write to files in given output directory" {
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" convert \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml \
