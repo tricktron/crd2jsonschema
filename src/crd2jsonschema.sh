@@ -20,18 +20,38 @@ EOF
 
 function get_openapi_v3_schema()
 {
-    yq -e '.spec.versions[0].schema.openAPIV3Schema' "$1"
+    local crd
+    crd="$1"
+    yq -e '.spec.versions[0].schema.openAPIV3Schema' "$crd" 2>/dev/null || \
+        echo "OpenAPI V3 schema not found. Is $crd a CRD?" >&2
+}
+
+function get_crd_kind()
+{
+    local crd
+    crd="$1"
+    yq -e '.spec.names.singular' "$crd" 2>/dev/null || \
+        { echo ".spec.names.singular not found. Is $crd a valid CRD?" >&2; exit 1; }
+}
+
+function get_crd_version()
+{
+    local crd
+    crd="$1"
+    yq -e '.spec.versions[0].name' "$crd" 2>/dev/null || \
+        { echo ".spec.versions[0].name not found. Is $crd a valid CRD?" >&2; exit 1; }
 }
 
 function get_jsonschema_file_name()
-{
-    local CRD_KIND
-    CRD_KIND="$(yq -e '.spec.names.singular' "$1")"
-    local CRD_VERSION
-    CRD_VERSION="$(yq -e '.spec.versions[0].name' "$1")"
-    echo "${CRD_KIND}_${CRD_VERSION}.json"
+{   
+    local crd
+    crd="$1"
+    local crd_kind
+    crd_kind="$(get_crd_kind "$crd")" || exit 1
+    local crd_version
+    crd_version="$(get_crd_version "$crd")" || exit 1
+    echo "${crd_kind}_${crd_version}.json"
 }
-
 
 function convert_to_strict_json()
 {
@@ -49,9 +69,9 @@ function convert_to_jsonschema4()
 
 function convert_crd_openapiv3_schema_to_jsonschema()
 {
-    get_openapi_v3_schema "$1" | \
-        convert_to_strict_json | \
-        convert_to_jsonschema4
+    openapiv3_schema="$(get_openapi_v3_schema "$1")"
+    strict_schema="$(echo "$openapiv3_schema" | convert_to_strict_json)"
+    echo "$strict_schema" | convert_to_jsonschema4
 }
 
 

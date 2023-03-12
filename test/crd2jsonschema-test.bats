@@ -54,12 +54,29 @@ teardown() {
 
 @test "should create kind_version.json file name from CRD metadata" {
     . "$PROJECT_ROOT"/src/crd2jsonschema.sh
-    export -f get_jsonschema_file_name
 
-    run bash -c "get_jsonschema_file_name \
-        $PROJECT_ROOT/test/fixtures/openshift-route-v1.crd.yml"
+    run get_jsonschema_file_name \
+        "$PROJECT_ROOT/test/fixtures/openshift-route-v1.crd.yml"
 
     assert_output "route_v1.json"
+}
+
+@test "should exit if crd has no names.singular metadata" {
+    . "$PROJECT_ROOT"/src/crd2jsonschema.sh
+    crd_without_kind="$PROJECT_ROOT/test/fixtures/bitnami-sealedsecret-without-kind.yml"
+
+    run get_jsonschema_file_name "$crd_without_kind"
+    assert_failure
+    assert_output ".spec.names.singular not found. Is $crd_without_kind a valid CRD?"
+}
+
+@test "should exit if crd has no version metadata" {
+    . "$PROJECT_ROOT"/src/crd2jsonschema.sh
+    crd_without_version="$PROJECT_ROOT/test/fixtures/bitnami-sealedsecret-without-version.yml"
+
+    run get_jsonschema_file_name "$crd_without_version"
+    assert_failure
+    assert_output ".spec.versions[0].name not found. Is $crd_without_version a valid CRD?"
 }
 
 @test "should convert multiple OpenAPI V3 YAML CRDs to JSON schema and write to files in given output directory" {
