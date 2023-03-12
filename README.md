@@ -8,7 +8,7 @@ Converts Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to J
 ## Usage
 
 ```bash
-Usage: crd2jsonschema [options] [command]
+Usage: crd2jsonschema [options] [command] [crd]...
 
 Options:
   -o path   Output directory for JSON schema files

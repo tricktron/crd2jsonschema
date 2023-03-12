@@ -127,7 +127,7 @@ OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a CRD?"
 
     assert_failure
     assert_output "
-Usage: crd2jsonschema [options] [command]
+Usage: crd2jsonschema [options] [command] [crd]...
 
 Options:
   -o path   Output directory for JSON schema files
@@ -146,7 +146,7 @@ Commands:
     assert_output "
 Option does not exist : -foo
 
-Usage: crd2jsonschema [options] [command]
+Usage: crd2jsonschema [options] [command] [crd]...
 
 Options:
   -o path   Output directory for JSON schema files

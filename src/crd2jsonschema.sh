@@ -6,7 +6,7 @@ function cli_help()
 {
     cat << EOF
 
-Usage: crd2jsonschema [options] [command]
+Usage: crd2jsonschema [options] [command] [crd]...
 
 Options:
   -o path   Output directory for JSON schema files
