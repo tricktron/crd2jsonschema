@@ -15,6 +15,8 @@ JSON schema draft 4.
 
 Options:
   -o path   Output directory for JSON schema files
+  -a        Create all.json with all references to schemas (intended for 
+            use with yaml language server)
   -v        Print the version of crd2jsonschema
   -h        Print this help
 ```
