@@ -74,11 +74,7 @@ function convert_crd_openapiv3_schema_to_jsonschema()
 {
     local crd
     crd="$1"
-    local openapiv3_schema
-    openapiv3_schema="$(get_openapi_v3_schema "$1")" || exit 1
-    local strict_schema
-    strict_schema="$(echo "$openapiv3_schema" | convert_to_strict_json)" || exit 1
-    echo "$strict_schema" | convert_to_jsonschema4
+    get_openapi_v3_schema "$crd" | convert_to_strict_json | convert_to_jsonschema4
 }
 
 function create_all_jsonschema()
@@ -136,8 +132,7 @@ function main()
         if [[ -d "${OUTPUT_DIR-:}" ]]; then
             json_schema_filename="$(get_jsonschema_file_name "$crd")"
             crd_filenames+=("$json_schema_filename")
-            json_schema="$(convert_crd_openapiv3_schema_to_jsonschema "$crd")"
-            echo "$json_schema" > "$OUTPUT_DIR/$json_schema_filename"
+            convert_crd_openapiv3_schema_to_jsonschema "$crd" > "$OUTPUT_DIR/$json_schema_filename"
         else
             convert_crd_openapiv3_schema_to_jsonschema "$crd"
         fi
