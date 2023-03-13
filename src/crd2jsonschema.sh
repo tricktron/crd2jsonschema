@@ -148,9 +148,7 @@ function main()
     done
 
     if [[ -d "${OUTPUT_DIR-:}" && -n "${CREATE_ALL_JSON-:}" ]]; then
-        local all_jsonschema
-        all_jsonschema="$(create_all_jsonschema "${crd_filenames[@]}")"
-        echo "$all_jsonschema" > "$OUTPUT_DIR/all.json"
+        create_all_jsonschema "${crd_filenames[@]}" > "$OUTPUT_DIR/all.json"
     fi
 }
 
