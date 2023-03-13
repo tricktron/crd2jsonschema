@@ -88,8 +88,10 @@ function create_all_jsonschema()
     for crd_filename in "${crd_filenames[@]}"
     do
         # shellcheck disable=SC2016
-        all_jsonschema="$(echo "$all_jsonschema" | \
-            file="$crd_filename" yq -e -o json -I 4 '.oneOf += {"$ref": strenv(file)}')"
+        all_jsonschema="$(
+            echo "$all_jsonschema" | \
+            file="$crd_filename" yq -e -o json -I 4 '.oneOf += {"$ref": strenv(file)}'
+        )"
     done
     echo "$all_jsonschema"
 }

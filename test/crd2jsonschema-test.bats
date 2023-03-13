@@ -176,3 +176,14 @@ Options:
     # shellcheck disable=SC2016
     assert_output "$(yq -o json -I 4 -n '{"oneOf": [{"$ref": "sealedsecret_v1alpha1.json"}]}')"
 }
+
+@test "should create all.json with multiple references given -a option" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" -a \
+        "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml \
+        "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
+
+    assert_file_exist "$TEST_TEMP_DIR"/all.json
+    
+    run cat "$TEST_TEMP_DIR"/all.json
+    assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-multiple-all.json)"
+}
