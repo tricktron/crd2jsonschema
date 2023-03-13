@@ -164,3 +164,15 @@ Options:
   -v        Print the version of crd2jsonschema
   -h        Print this help"
 }
+
+
+@test "should create all.json with single reference given -a option" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" -a \
+        "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml
+
+    assert_file_exist "$TEST_TEMP_DIR"/all.json
+    
+    run cat "$TEST_TEMP_DIR"/all.json
+    # shellcheck disable=SC2016
+    assert_output "$(yq -o json -I 4 -n '{"oneOf": [{"$ref": "sealedsecret_v1alpha1.json"}]}')"
+}
