@@ -36,11 +36,18 @@ teardown() {
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }
 
-@test "should convert single OpenAPI V3 YAML CRD to JSON schema draft 4" {
+@test "should convert single OpenAPI V3 YAML CRD file to JSON schema draft 4" {
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
+}
+
+@test "should download and convert single OpenAPI V3 YAML CRD http file to JSON schema draft 4" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh \
+            "https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml"
+
+    assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-bitnami-sealedsecret-jsonschema4.json)"
 }
 
 @test "should convert single OpenAPI V3 YAML CRD to JSON schema and write to file in given output directory" {
