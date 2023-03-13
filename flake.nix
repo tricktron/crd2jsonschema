@@ -67,8 +67,6 @@
                     shellcheck
                     yq-go
                     nodejs
-                    kubernetes-controller-tools
-                    go
                 [   (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
                 ] 
                 ++ pkgs.lib.optionals 
