@@ -191,3 +191,13 @@ Options:
     run cat "$TEST_TEMP_DIR"/all.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-multiple-all.json)"
 }
+
+@test "should convert long OpenAPI V3 YAML CRD with newlines and pattern including $ to JSON schema draft 4 and write to file" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" \
+        "$PROJECT_ROOT"/test/fixtures/openshift-ingresscontroller-v1.crd.yml
+
+    assert_file_exist "$TEST_TEMP_DIR"/ingresscontroller_v1.json
+
+    run cat "$TEST_TEMP_DIR"/ingresscontroller_v1.json
+    assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-ingresscontroller-v1-jsonschema4.json)"
+}
