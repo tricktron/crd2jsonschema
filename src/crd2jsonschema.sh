@@ -13,6 +13,8 @@ JSON schema draft 4.
 
 Options:
   -o path   Output directory for JSON schema files
+  -a        Create all.json with all references to schemas (intended for 
+            use with yaml language server)
   -v        Print the version of crd2jsonschema
   -h        Print this help
 
@@ -79,11 +81,29 @@ function convert_crd_openapiv3_schema_to_jsonschema()
     echo "$strict_schema" | convert_to_jsonschema4
 }
 
+function create_all_jsonschema()
+{
+    local all_jsonschema
+    all_jsonschema="$(yq -e -o json -I 4 -n '{"oneOf": []}')"
+    local crd_filenames
+    crd_filenames=("$@")
+    for crd_filename in "${crd_filenames[@]}"
+    do
+        # shellcheck disable=SC2016
+        all_jsonschema="$(
+            echo "$all_jsonschema" | \
+            file="$crd_filename" yq -e -o json -I 4 '.oneOf += {"$ref": strenv(file)}'
+        )"
+    done
+    echo "$all_jsonschema"
+}
+
 
 function main()
 {
     local OUTPUT_DIR
-    while getopts :o:vh option
+    local CREATE_ALL_JSON
+    while getopts :o:vha option
     do
     case "$option" in
         o)
@@ -93,8 +113,11 @@ function main()
                 exit 1
             fi
             ;;
+        a)
+            CREATE_ALL_JSON=1
+            ;;
         v)
-            echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"
+            echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"; exit 0
             ;;
         h)
             cli_help; exit 0
@@ -107,16 +130,24 @@ function main()
     
     shift $((OPTIND-1))
 
+    local crd_filenames=()
     for crd in "$@"
     do  
         if [[ -d "${OUTPUT_DIR-:}" ]]; then
             json_schema_filename="$(get_jsonschema_file_name "$crd")"
+            crd_filenames+=("$json_schema_filename")
             json_schema="$(convert_crd_openapiv3_schema_to_jsonschema "$crd")"
             echo "$json_schema" > "$OUTPUT_DIR/$json_schema_filename"
         else
             convert_crd_openapiv3_schema_to_jsonschema "$crd"
         fi
     done
+
+    if [[ -d "${OUTPUT_DIR-:}" && -n "${CREATE_ALL_JSON-:}" ]]; then
+        local all_jsonschema
+        all_jsonschema="$(create_all_jsonschema "${crd_filenames[@]}")"
+        echo "$all_jsonschema" > "$OUTPUT_DIR/all.json"
+    fi
 }
 
 WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"

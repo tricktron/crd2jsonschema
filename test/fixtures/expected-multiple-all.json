@@ -1,0 +1,10 @@
+{
+    "oneOf": [
+        {
+            "$ref": "sealedsecret_v1alpha1.json"
+        },
+        {
+            "$ref": "route_v1.json"
+        }
+    ]
+}
