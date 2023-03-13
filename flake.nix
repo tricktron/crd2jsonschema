@@ -22,7 +22,8 @@
             [ 
                 bash 
                 yq-go 
-                nodejs 
+                nodejs
+                wget
             ]
             ++ 
             [ self.packages.${system}.openapi-schema-to-json-schema ];
@@ -62,11 +63,10 @@
             {
                packages = with pkgs;
                 [
+                    wget
                     shellcheck
                     yq-go
                     nodejs
-                    kubernetes-controller-tools
-                    go
                 [   (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
                 ] 
                 ++ pkgs.lib.optionals 

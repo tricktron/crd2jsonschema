@@ -9,7 +9,7 @@ function cli_help()
 Usage: crd2jsonschema [options] [crd]...
 
 Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
-JSON schema draft 4.
+JSON schema draft 4. CRDs can be specified as a file path or as a URL.
 
 Options:
   -o path   Output directory for JSON schema files
@@ -127,21 +127,28 @@ function main()
     shift $((OPTIND-1))
 
     local crd_filenames=()
+    local current_crd
     for crd in "$@"
     do  
-        if [[ -d "${OUTPUT_DIR-:}" ]]; then
-            json_schema_filename="$(get_jsonschema_file_name "$crd")"
-            crd_filenames+=("$json_schema_filename")
-            convert_crd_openapiv3_schema_to_jsonschema "$crd" > "$OUTPUT_DIR/$json_schema_filename"
+        if [[ "$crd" == http* ]]; then
+            temp_dir="$(mktemp -d)"
+            wget -qO "$temp_dir/crd.yaml" "$crd"
+            current_crd="$temp_dir/crd.yaml"
         else
-            convert_crd_openapiv3_schema_to_jsonschema "$crd"
+            current_crd="$crd"
+        fi
+
+        if [[ -d "${OUTPUT_DIR-:}" ]]; then
+            json_schema_filename="$(get_jsonschema_file_name "$current_crd")"
+            crd_filenames+=("$json_schema_filename")
+            convert_crd_openapiv3_schema_to_jsonschema "$current_crd" > "$OUTPUT_DIR/$json_schema_filename"
+        else
+            convert_crd_openapiv3_schema_to_jsonschema "$current_crd"
         fi
     done
 
     if [[ -d "${OUTPUT_DIR-:}" && -n "${CREATE_ALL_JSON-:}" ]]; then
-        local all_jsonschema
-        all_jsonschema="$(create_all_jsonschema "${crd_filenames[@]}")"
-        echo "$all_jsonschema" > "$OUTPUT_DIR/all.json"
+        create_all_jsonschema "${crd_filenames[@]}" > "$OUTPUT_DIR/all.json"
     fi
 }
 
