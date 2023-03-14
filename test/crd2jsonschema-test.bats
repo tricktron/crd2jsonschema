@@ -5,7 +5,7 @@ setup() {
     bats_load_library bats-assert
     bats_load_library bats-file
     PROJECT_ROOT="$( cd "$( dirname "$BATS_TEST_FILENAME" )/.." >/dev/null 2>&1 && pwd )"
-    PATH="$PROJECT_ROOT/src:$PATH"
+    PATH="$PROJECT_ROOT/dist:$PATH"
     TEST_TEMP_DIR="$(temp_make)"
     export BATSLIB_TEMP_PRESERVE=0
     export BATSLIB_TEMP_PRESERVE_ON_FAILURE=0
@@ -43,6 +43,7 @@ teardown() {
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }
 
+# bats test_tags=internet
 @test "should download and convert single OpenAPI V3 YAML CRD http file to JSON schema draft 4" {
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh \
             "https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml"

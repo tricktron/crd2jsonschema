@@ -20,43 +20,51 @@
             pkgs-bats   = nixpkgs-bats.legacyPackages.${system};
             runtimeDeps = with pkgs; 
             [ 
-                bash 
                 yq-go 
                 nodejs
                 wget
-            ]
-            ++ 
-            [ self.packages.${system}.openapi-schema-to-json-schema ];
+            ];
         in
         {
             packages = 
             {
-                default                      = pkgs.writeScriptBin "crd2jsonschema.sh" 
-                ''
-                    export PATH="${pkgs.lib.makeBinPath runtimeDeps}:$PATH"
-                    ${builtins.readFile ./src/crd2jsonschema.sh}
-                '';
-
-                openapi-schema-to-json-schema = pkgs.buildNpmPackage rec
+                crd2jsonschema = pkgs.buildNpmPackage
                 {
-                    version      = "3.2.0";
-                    name         = "openapi-schema-to-json-schema";
-                    src          = 
-                    builtins.filterSource(path: type:
-                        type == "regular" && 
-                        (builtins.elem (baseNameOf path)
-                        [ "package.json" "package-lock.json" "main.js"]))
-                        ./src;
-                    npmDepsHash  = "sha256-hmPm6CWk9gnBizNA/304kxSNTJUex7AgXUyFhjdxqcI=";
-                    dontNpmBuild = true;
-                    postInstall  = 
+                    name              = "crd2jsonschema";
+                    src               = ./.;
+                    version           = "0.1.1";
+                    npmDepsHash       = "sha256-jLtyUBCIgnLxwbtnayGupj6TVRwyuu7ASpdB6kAwFHA=";
+                    nativeBuildInputs = with pkgs; [ makeWrapper esbuild ];
+                    installPhase      =
                     ''
+                        runHook preInstall
                         mkdir -p $out/bin
-                        chmod +x $out/lib/node_modules/${name}/main.js
-                        ln -s $out/lib/node_modules/${name}/main.js $out/bin/main.js
+                        cp ./src/crd2jsonschema.sh $out/bin/crd2jsonschema
+                        cp ./dist/oas3tojsonschema4.js $out/bin
+                        chmod +x $out/bin/oas3tojsonschema4.js
+                        chmod +x $out/bin/crd2jsonschema
+                        wrapProgram $out/bin/crd2jsonschema \
+                            --prefix PATH : "${pkgs.lib.makeBinPath runtimeDeps}:$out/bin"
+                        runHook postInstall
+                    '';
+                    nativeInstallCheckInputs = 
+                    [ 
+                        (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
+                        pkgs.shellcheck
+                    ] 
+                    ++ runtimeDeps;
+
+                    doInstallCheck = true;
+                    installCheckPhase = ''
+                        runHook preInstallCheck
+                        shellcheck ./src/*.sh
+                        shellcheck -x ./test/*.bats
+                        bats --filter-tags \!internet ./test
+                        runHook postInstallCheck
                     '';
                 };
 
+                default = self.packages.${system}.crd2jsonschema;
             };
 
             devShells.default = pkgs.mkShell
@@ -67,6 +75,7 @@
                     shellcheck
                     yq-go
                     nodejs
+                    esbuild
                 [   (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
                 ] 
                 ++ pkgs.lib.optionals 

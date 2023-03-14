@@ -34,16 +34,15 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
       - name: Cache Dev Shell & Install Npm Dependencies
-        run: nix develop && cd src && npm ci
-
+        run: |
+          nix develop -c npm ci
+          nix develop -c npm run build
+          
       - name: Shellcheck Tests
         run: nix develop -c shellcheck -x test/*.bats
 
       - name: Shellcheck Src
         run: nix develop -c shellcheck -x src/*.sh
-
-      - name: Install openapi-schema-to-json-schema
-        run: nix develop 
 
       - name: Run Tests
         run: nix develop -c bats test
