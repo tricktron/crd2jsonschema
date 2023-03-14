@@ -48,7 +48,12 @@ jobs:
         run: nix develop -c bats test
 
       - name: Generate Coverage
-        run: nix develop -c kcov --clean --include-pattern=.sh --exclude-pattern=bats --include-path=src coverage bats test
+        run: >-
+          nix develop -c kcov 
+          --clean
+          --include-path=src
+          --include-pattern=.sh 
+          coverage bats test
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
