@@ -1,0 +1,11 @@
+{
+    "name": "oas3tojsonschema4",
+    "version": "3.2.0",
+    "bin": "./dist/oas3tojsonschema4.js",
+    "dependencies": {
+        "@openapi-contrib/openapi-schema-to-json-schema": "^3.2.0"
+    },
+    "scripts": {
+        "build": "esbuild src/main.js --bundle --outfile=dist/oas3tojsonschema4.js --platform=node"
+    }
+}
