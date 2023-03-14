@@ -113,7 +113,7 @@ function main()
             CREATE_ALL_JSON=1
             ;;
         v)
-            echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"; exit 0
+            echo "crd2jsonschema version $CRD2JSONSCHEMA_VERSION"; exit 0
             ;;
         h)
             cli_help; exit 0
@@ -152,8 +152,8 @@ function main()
     fi
 }
 
-WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export WORKDIR
+CRD2JSONSCHEMA_VERSION="0.1.1"
+export CRD2JSONSCHEMA_VERSION
 
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]
 then

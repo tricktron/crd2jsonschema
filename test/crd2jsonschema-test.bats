@@ -148,11 +148,11 @@ Options:
 }
 
 @test "should print version given -v option" {
-    VERSION="$(cat "$PROJECT_ROOT"/src/VERSION)"
+    . "$PROJECT_ROOT"/src/crd2jsonschema.sh
 
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh -v
 
-    assert_output "crd2jsonschema version $VERSION"
+    assert_output "crd2jsonschema version $CRD2JSONSCHEMA_VERSION"
 }
 
 @test "should print help given unknown option" {
