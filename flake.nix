@@ -3,9 +3,8 @@
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
     inputs.nixpkgs-fork.url   = "github:tricktron/nixpkgs/f-kcov-41";
-    inputs.nixpkgs-bats.url   = "github:tricktron/nixpkgs/f-bats-1.9.0";
 
-    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, nixpkgs-bats }:
+    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -17,20 +16,35 @@
         let 
             pkgs        = nixpkgs.legacyPackages.${system};
             pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
-            pkgs-bats   = nixpkgs-bats.legacyPackages.${system};
             runtimeDeps = with pkgs; 
             [ 
                 yq-go 
                 nodejs
                 wget
+                coreutils
             ];
+            name        = "crd2jsonschema";
+            version     = "0.1.1";
+            crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
+            {
+                inherit name;
+                tag  = version;
+                config =
+                {
+                    Entrypoint = [ "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema" ];
+                    Cmd        = [ "-h" ];
+                };
+                extraCommands = "mkdir -m 0777 tmp";
+                contents = [ pkgs.dockerTools.caCertificates self.packages.${system}.crd2jsonschema ];
+            };
         in
         {
             packages = 
             {
+                crd2jsonschema-amd64-image = crd2jsonschema-image pkgs;
                 crd2jsonschema = pkgs.buildNpmPackage
                 {
-                    name              = "crd2jsonschema";
+                    inherit name version;
                     src               = ./.;
                     npmDepsHash       = "sha256-gRcvPyZZ1kdR4ig1rNBwNMP5k0PkJcevZVgpFIq/wPI=";
                     nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
@@ -47,10 +61,10 @@
                         install -Dm755 ./dist/oas3tojsonschema4 $out/bin/oas3tojsonschema4
                         runHook postInstall
                     '';
-                    nativeInstallCheckInputs = 
+                    nativeInstallCheckInputs = with pkgs;
                     [ 
-                        (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
-                        pkgs.shellcheck
+                        (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
+                        shellcheck
                     ] 
                     ++ runtimeDeps;
 
@@ -61,6 +75,12 @@
                         shellcheck -x ./test/*.bats
                         bats --filter-tags \!internet ./test
                         runHook postInstallCheck
+                    '';
+
+                    postFixup =
+                    ''
+                        wrapProgram $out/bin/crd2jsonschema \
+                            --prefix PATH : "${pkgs.lib.makeBinPath runtimeDeps}:$out/bin"
                     '';
                 };
 
@@ -76,7 +96,8 @@
                     yq-go
                     nodejs
                     esbuild
-                [   (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
+                [   (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
+                    docker
                 ] 
                 ++ pkgs.lib.optionals 
                     (system == "x86_64-linux" || system == "aarch64-linux") 

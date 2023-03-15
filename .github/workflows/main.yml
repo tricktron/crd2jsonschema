@@ -33,6 +33,12 @@ jobs:
           name: tricktron
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
+      - name: Build & Load Image
+        run: nix develop -c $(nix build --print-out-paths .#crd2jsonschema-amd64-image) | docker load
+
+      - name: Test Docker Image
+        run: nix develop -c docker run crd2jsonschema:0.1.1 https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
+      
       - name: Cache Dev Shell & Install Npm Dependencies
         run: |
           nix develop -c npm ci
