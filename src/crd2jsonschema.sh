@@ -67,7 +67,7 @@ function convert_to_strict_json()
 
 function convert_to_jsonschema4()
 {
-    cat | oas3tojsonschema4.js
+    cat | oas3tojsonschema4
 }
 
 function convert_crd_openapiv3_schema_to_jsonschema()

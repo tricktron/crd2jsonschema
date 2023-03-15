@@ -32,19 +32,19 @@
                 {
                     name              = "crd2jsonschema";
                     src               = ./.;
-                    version           = "0.1.1";
-                    npmDepsHash       = "sha256-jLtyUBCIgnLxwbtnayGupj6TVRwyuu7ASpdB6kAwFHA=";
-                    nativeBuildInputs = with pkgs; [ makeWrapper esbuild ];
+                    npmDepsHash       = "sha256-gRcvPyZZ1kdR4ig1rNBwNMP5k0PkJcevZVgpFIq/wPI=";
+                    nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
+                    postPatch         = 
+                    ''
+                        patchShebangs ./src/crd2jsonschema.sh
+                        patchShebangs ./src/oas3tojsonschema4.js
+                        patchShebangs ./test/*.bats
+                    '';
                     installPhase      =
                     ''
                         runHook preInstall
-                        mkdir -p $out/bin
-                        cp ./src/crd2jsonschema.sh $out/bin/crd2jsonschema
-                        cp ./dist/oas3tojsonschema4.js $out/bin
-                        chmod +x $out/bin/oas3tojsonschema4.js
-                        chmod +x $out/bin/crd2jsonschema
-                        wrapProgram $out/bin/crd2jsonschema \
-                            --prefix PATH : "${pkgs.lib.makeBinPath runtimeDeps}:$out/bin"
+                        install -Dm755 ./src/crd2jsonschema.sh $out/bin/crd2jsonschema
+                        install -Dm755 ./dist/oas3tojsonschema4 $out/bin/oas3tojsonschema4
                         runHook postInstall
                     '';
                     nativeInstallCheckInputs = 

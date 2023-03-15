@@ -5,7 +5,7 @@ setup() {
     bats_load_library bats-assert
     bats_load_library bats-file
     PROJECT_ROOT="$( cd "$( dirname "$BATS_TEST_FILENAME" )/.." >/dev/null 2>&1 && pwd )"
-    PATH="$PROJECT_ROOT/dist:$PATH"
+    PATH="$PATH:$PROJECT_ROOT/dist"
     TEST_TEMP_DIR="$(temp_make)"
     export BATSLIB_TEMP_PRESERVE=0
     export BATSLIB_TEMP_PRESERVE_ON_FAILURE=0
