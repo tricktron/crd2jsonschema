@@ -87,6 +87,25 @@
                 default = self.packages.${system}.crd2jsonschema;
             };
 
+            apps =
+            {
+                dockerIntegrationTest = 
+                {
+                    type = "app"; 
+                    program = "${pkgs.writeShellApplication
+                    {
+                        name          = "dockerIntegrationTest.sh";
+                        runtimeInputs = with pkgs; [ docker ];
+                        text          = 
+                        ''
+                            ${self.packages.${system}.crd2jsonschema-amd64-image} | docker load
+                            docker run --rm ${name}:${version} \
+                            https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
+                        '';
+                    }}/bin/dockerIntegrationTest.sh";
+                };
+            };
+
             devShells.default = pkgs.mkShell
             {
                packages = with pkgs;
@@ -102,6 +121,8 @@
                 ++ pkgs.lib.optionals 
                     (system == "x86_64-linux" || system == "aarch64-linux") 
                 [ pkgs-fork.kcov ];
+                
+                CRD2JSONSCHEMA_IMAGE_NAME = "${name}:${version}";
             };
         }
     );
