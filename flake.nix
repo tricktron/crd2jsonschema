@@ -3,8 +3,13 @@
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
     inputs.nixpkgs-fork.url   = "github:tricktron/nixpkgs/f-kcov-41";
+    inputs.ci-flake-lib       =
+    {
+        url                        = "github:tricktron/ci-flake-lib";
+        inputs.nixpkgs.follows     = "nixpkgs";
+    };
 
-    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork }:
+    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, ci-flake-lib }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -14,9 +19,10 @@
     ]
     (system:
         let 
-            pkgs        = nixpkgs.legacyPackages.${system};
+            pkgs        = import nixpkgs { inherit system; overlays = builtins.attrValues ci-flake-lib.overlays; };
+            inherit (pkgs) ci-lib;
             pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
-            runtimeDeps = with pkgs; 
+            runtimeDeps = with pkgs;
             [ 
                 yq-go 
                 nodejs
@@ -24,7 +30,7 @@
                 coreutils
             ];
             name        = "crd2jsonschema";
-            version     = "0.1.1";
+            version     = "1.0.0";
             crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
             {
                 inherit name;
@@ -87,7 +93,12 @@
                 default = self.packages.${system}.crd2jsonschema;
             };
 
-            apps =
+            apps = let 
+                registryUser          = ''"$CI_REGISTRY_USER"'';
+                registryPassword      = ''"$CI_REGISTRY_PASSWORD"'';
+                registryBaseUrl       = ''"$CI_REGISTRY"'';
+                imageUrlWithoutTag    = ''"$CI_REGISTRY_IMAGE"'';
+            in 
             {
                 dockerIntegrationTest = 
                 {
@@ -103,6 +114,49 @@
                             https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
                         '';
                     }}/bin/dockerIntegrationTest.sh";
+                };
+
+                push-amd64-image-to-registry =
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.pushContainerToRegistry 
+                    { 
+                        inherit registryUser registryPassword;
+                        streamLayeredImage = self.packages.${system}.crd2jsonschema-amd64-image;
+                        imageUrlWithTag    = "${imageUrlWithoutTag}-amd64:${version}";
+                    }}/bin/pushToRegistry.sh"; 
+                };
+
+                push-arm64-image-to-registry =
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.pushContainerToRegistry 
+                    { 
+                        inherit registryUser registryPassword;
+                        streamLayeredImage = self.packages.${system}.crd2jsonschema-arm64-image;
+                        imageUrlWithTag    = "${imageUrlWithoutTag}-arm64:${version}";
+                    }}/bin/pushToRegistry.sh"; 
+                };
+
+                create-multi-arch-manifest = 
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.createMultiArchManifest 
+                    {
+                        inherit registryUser registryPassword imageUrlWithoutTag;
+                        tag = version;
+                    }}/bin/createMultiArchManifest.sh"; 
+                };
+
+                retag-image = 
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.retagImage 
+                    {
+                        inherit registryUser registryPassword registryBaseUrl;
+                        imageUrlWithTag = "${imageUrlWithoutTag}:${version}";
+                        newTag = "latest";
+                    }}/bin/retagImage.sh"; 
                 };
             };
 
@@ -121,8 +175,6 @@
                 ++ pkgs.lib.optionals 
                     (system == "x86_64-linux" || system == "aarch64-linux") 
                 [ pkgs-fork.kcov ];
-                
-                CRD2JSONSCHEMA_IMAGE_NAME = "${name}:${version}";
             };
         }
     );

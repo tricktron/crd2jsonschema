@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "ci-flake-lib": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1678981859,
+        "narHash": "sha256-UcWYTbrFP084nrJNoWDFRi31KpxNJjtzVdL5kMcTZkQ=",
+        "owner": "tricktron",
+        "repo": "ci-flake-lib",
+        "rev": "7015c8a781200560851f8c38a1b2740222556c26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tricktron",
+        "repo": "ci-flake-lib",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "locked": {
         "lastModified": 1678901627,
@@ -48,6 +68,7 @@
     },
     "root": {
       "inputs": {
+        "ci-flake-lib": "ci-flake-lib",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
         "nixpkgs-fork": "nixpkgs-fork"

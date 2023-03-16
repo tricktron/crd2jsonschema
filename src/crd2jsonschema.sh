@@ -152,7 +152,7 @@ function main()
     fi
 }
 
-CRD2JSONSCHEMA_VERSION="0.1.1"
+CRD2JSONSCHEMA_VERSION="1.0.0"
 export CRD2JSONSCHEMA_VERSION
 
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]
