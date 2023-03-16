@@ -9,6 +9,10 @@ on:
 
 env:
   FORCE_COLOR: 2
+  CI_REGISTRY_BASE_URL: ghcr.io
+  CI_REGISTRY_USER: ${{ github.actor }}
+  CI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+  CI_REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   ci:
@@ -18,7 +22,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v3
 
-      - name: Install Nix with Flakes Support and Haskell Nix Binary Cache
+      - name: Install Nix with Flakes support and Haskell Nix binary cache
         uses: cachix/install-nix-action@v19
         with:
           install_url: https://releases.nixos.org/nix/nix-2.13.3/install
@@ -27,31 +31,31 @@ jobs:
             substituters = https://hydra.iohk.io https://cache.nixos.org
             trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             allowed-users = *
-      - name: Use Cachix to Pull and Push Binary Cache
+      - name: Use Cachix to pull and push binary cache
         uses: cachix/cachix-action@v12
         with:
           name: tricktron
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
       
-      - name: Cache Dev Shell & Install Npm Dependencies
+      - name: Cache dev shell & install Npm dependencies
         run: |
           nix develop -c npm ci
           nix develop -c npm run build
           
-      - name: Shellcheck Tests
+      - name: Shellcheck tests
         run: nix develop -c shellcheck -x test/*.bats
 
-      - name: Shellcheck Src
+      - name: Shellcheck src
         run: nix develop -c shellcheck -x src/*.sh
 
-      - name: Run Tests
+      - name: Run tests
         run: nix develop -c bats test
 
-      - name: Run Docker Integration Test
+      - name: Run Docker integration test
         run: nix run .#dockerIntegrationTest
 
-      - name: Generate Coverage
+      - name: Generate coverage
         run: >-
           nix develop -c kcov 
           --clean
@@ -59,10 +63,21 @@ jobs:
           --include-pattern=.sh 
           coverage bats test
 
-      - name: Upload Coverage to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage
           fail_ci_if_error: true
           verbose: true
+
+      - name: Build & push crd2jsonschema amd64 image
+        run: nix run .#push-amd64-image-to-registry
+      
+      - name: Build & push crd2jsonschema arm64 image
+        run: nix run .#push-arm64-image-to-registry
+
+      - name: Create multi arch image and retag it as latest
+        run: |
+          nix run .#create-multi-arch-manifest
+          nix run .#retag-image

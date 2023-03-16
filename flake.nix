@@ -47,7 +47,8 @@
         {
             packages = 
             {
-                crd2jsonschema-amd64-image = crd2jsonschema-image pkgs;
+                crd2jsonschema-amd64-image = crd2jsonschema-image pkgs.pkgsStatic;
+                crd2jsonschema-arm64-image = crd2jsonschema-image pkgs.pkgsCross.aarch64-multiplatform-musl.pkgsStatic;
                 crd2jsonschema = pkgs.buildNpmPackage
                 {
                     inherit name version;
@@ -96,7 +97,7 @@
             apps = let 
                 registryUser          = ''"$CI_REGISTRY_USER"'';
                 registryPassword      = ''"$CI_REGISTRY_PASSWORD"'';
-                registryBaseUrl       = ''"$CI_REGISTRY"'';
+                registryBaseUrl       = ''"$CI_REGISTRY_BASE_URL"'';
                 imageUrlWithoutTag    = ''"$CI_REGISTRY_IMAGE"'';
             in 
             {
