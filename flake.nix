@@ -118,7 +118,7 @@
                             docker run ${name}:${version} \
                                 https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
                             docker run -v "$(pwd)":/app ${name}:${version} -a -o out \
-                                test/fixtures/openshift-route-v1.crd.yml
+                                test/fixtures/*.crd.yml
                             cat out/route_v1.json
                             cat out/all.json
                             rm out/route_v1.json
