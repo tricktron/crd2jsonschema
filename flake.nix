@@ -34,14 +34,18 @@
             crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
             {
                 inherit name;
-                tag  = version;
-                config =
+                tag           = version;
+                extraCommands =
+                ''
+                    mkdir -m 0755 {tmp,app}
+                '';
+                contents      = [ pkgs.dockerTools.caCertificates self.packages.${system}.crd2jsonschema ];
+                config        =
                 {
                     Entrypoint = [ "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema" ];
                     Cmd        = [ "-h" ];
+                    WorkingDir = "/app";
                 };
-                extraCommands = "mkdir -m 0777 tmp";
-                contents = [ pkgs.dockerTools.caCertificates self.packages.${system}.crd2jsonschema ];
             };
         in
         {
@@ -111,8 +115,14 @@
                         text          = 
                         ''
                             ${self.packages.${system}.crd2jsonschema-amd64-image} | docker load
-                            docker run --rm ${name}:${version} \
-                            https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
+                            docker run ${name}:${version} \
+                                https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
+                            docker run -v "$(pwd)":/app ${name}:${version} -a -o out \
+                                test/fixtures/openshift-route-v1.crd.yml
+                            cat out/route_v1.json
+                            cat out/all.json
+                            rm out/route_v1.json
+                            rm out/all.json
                         '';
                     }}/bin/dockerIntegrationTest.sh";
                 };
@@ -158,6 +168,13 @@
                         imageUrlWithTag = "${imageUrlWithoutTag}:${version}";
                         newTag = "latest";
                     }}/bin/retagImage.sh"; 
+                };
+
+                default =
+                {
+                    type = "app";
+                    program = "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema";
+                    cmdArgs = [ "-v" ];
                 };
             };
 
