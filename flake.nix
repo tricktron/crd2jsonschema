@@ -98,10 +98,10 @@
                 default = self.packages.${system}.crd2jsonschema;
             };
 
-            overlays.default = final: prev:
+            overlays.default = (final: prev:
             {
                 crd2jsonschema = self.packages.${system}.crd2jsonschema; 
-            };
+            });
 
             apps = let 
                 registryUser          = ''"$CI_REGISTRY_USER"'';
