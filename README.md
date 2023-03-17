@@ -7,7 +7,7 @@ Converts Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to J
 
 ## Usage
 
-https://github.com/tricktron/crd2jsonschema/blob/main/src/crd2jsonschema.sh#L9-L32
+https://github.com/tricktron/crd2jsonschema/blob/3c32a2a53cc553a766a365e8de74f2b2aab94edf/src/crd2jsonschema.sh#L9-L32
 
 ## Installation
 
