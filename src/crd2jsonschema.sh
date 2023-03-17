@@ -18,6 +18,18 @@ Options:
   -v        Print the version of crd2jsonschema
   -h        Print this help
 
+Examples:
+
+# convert a single CRD file and print to stdout
+crd2jsonschema your-crd.yml
+
+# convert a single CRD from a URL and write as kind_version.json to output dir 
+crd2jsonschema -o output-dir https://example.com/your-crd.yml
+
+# convert multiple CRDs, write kind_version.json files to output dir and
+# create all.json with all references to schemas
+crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
+crd2jsonschema -a -o ./output ./crds/*.yml
 EOF
 }
 
@@ -26,7 +38,7 @@ function get_openapi_v3_schema()
     local crd
     crd="$1"
     yq -e '.spec.versions[0].schema.openAPIV3Schema' "$crd" 2>/dev/null || \
-        { echo "OpenAPI V3 schema not found. Is $crd a CRD?" >&2; exit 1; }
+        { echo "OpenAPI V3 schema not found. Is $crd a valid CRD?" >&2; exit 1; }
 }
 
 function get_crd_kind()
@@ -62,12 +74,12 @@ function convert_to_strict_json()
         with(.. | select(has("properties")) | 
         select(has("additionalProperties") | not); 
             .additionalProperties = false)
-    '
+    ' 2>/dev/null
 }
 
 function convert_to_jsonschema4()
 {
-    cat | main.js
+    cat | oas3tojsonschema4
 }
 
 function convert_crd_openapiv3_schema_to_jsonschema()
@@ -113,7 +125,7 @@ function main()
             CREATE_ALL_JSON=1
             ;;
         v)
-            echo "crd2jsonschema version $(cat "$WORKDIR"/VERSION)"; exit 0
+            echo "crd2jsonschema version $CRD2JSONSCHEMA_VERSION"; exit 0
             ;;
         h)
             cli_help; exit 0
@@ -125,6 +137,10 @@ function main()
     done
     
     shift $((OPTIND-1))
+
+    if [[ "$#" -eq 0 ]]; then
+        cli_help; exit 0
+    fi
 
     local crd_filenames=()
     local current_crd
@@ -138,7 +154,7 @@ function main()
             current_crd="$crd"
         fi
 
-        if [[ -d "${OUTPUT_DIR-:}" ]]; then
+        if [[ -d "${OUTPUT_DIR-}" ]]; then
             json_schema_filename="$(get_jsonschema_file_name "$current_crd")"
             crd_filenames+=("$json_schema_filename")
             convert_crd_openapiv3_schema_to_jsonschema "$current_crd" > "$OUTPUT_DIR/$json_schema_filename"
@@ -147,13 +163,13 @@ function main()
         fi
     done
 
-    if [[ -d "${OUTPUT_DIR-:}" && -n "${CREATE_ALL_JSON-:}" ]]; then
+    if [[ -d "${OUTPUT_DIR-}" && -n "${CREATE_ALL_JSON-}" ]]; then
         create_all_jsonschema "${crd_filenames[@]}" > "$OUTPUT_DIR/all.json"
     fi
 }
 
-WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export WORKDIR
+CRD2JSONSCHEMA_VERSION="1.0.0"
+export CRD2JSONSCHEMA_VERSION
 
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]
 then

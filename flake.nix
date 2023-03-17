@@ -3,9 +3,13 @@
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
     inputs.nixpkgs-fork.url   = "github:tricktron/nixpkgs/f-kcov-41";
-    inputs.nixpkgs-bats.url   = "github:tricktron/nixpkgs/f-bats-1.9.0";
+    inputs.ci-flake-lib       =
+    {
+        url                        = "github:tricktron/ci-flake-lib";
+        inputs.nixpkgs.follows     = "nixpkgs";
+    };
 
-    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, nixpkgs-bats }:
+    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, ci-flake-lib }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -15,48 +19,163 @@
     ]
     (system:
         let 
-            pkgs        = nixpkgs.legacyPackages.${system};
+            pkgs        = import nixpkgs { inherit system; overlays = builtins.attrValues ci-flake-lib.overlays; };
+            inherit (pkgs) ci-lib;
             pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
-            pkgs-bats   = nixpkgs-bats.legacyPackages.${system};
-            runtimeDeps = with pkgs; 
+            runtimeDeps = with pkgs;
             [ 
-                bash 
                 yq-go 
                 nodejs
                 wget
-            ]
-            ++ 
-            [ self.packages.${system}.openapi-schema-to-json-schema ];
+                coreutils
+            ];
+            name        = "crd2jsonschema";
+            version     = "1.0.0";
+            crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
+            {
+                inherit name;
+                tag           = version;
+                extraCommands =
+                ''
+                    mkdir -m 0755 {tmp,app}
+                '';
+                contents      = [ pkgs.dockerTools.caCertificates self.packages.${system}.crd2jsonschema ];
+                config        =
+                {
+                    Entrypoint = [ "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema" ];
+                    Cmd        = [ "-h" ];
+                    WorkingDir = "/app";
+                };
+            };
         in
         {
             packages = 
             {
-                default                      = pkgs.writeScriptBin "crd2jsonschema.sh" 
-                ''
-                    export PATH="${pkgs.lib.makeBinPath runtimeDeps}:$PATH"
-                    ${builtins.readFile ./src/crd2jsonschema.sh}
-                '';
-
-                openapi-schema-to-json-schema = pkgs.buildNpmPackage rec
+                crd2jsonschema-amd64-image = crd2jsonschema-image pkgs.pkgsStatic;
+                crd2jsonschema-arm64-image = crd2jsonschema-image pkgs.pkgsCross.aarch64-multiplatform-musl.pkgsStatic;
+                crd2jsonschema = pkgs.buildNpmPackage
                 {
-                    version      = "3.2.0";
-                    name         = "openapi-schema-to-json-schema";
-                    src          = 
-                    builtins.filterSource(path: type:
-                        type == "regular" && 
-                        (builtins.elem (baseNameOf path)
-                        [ "package.json" "package-lock.json" "main.js"]))
-                        ./src;
-                    npmDepsHash  = "sha256-hmPm6CWk9gnBizNA/304kxSNTJUex7AgXUyFhjdxqcI=";
-                    dontNpmBuild = true;
-                    postInstall  = 
+                    inherit name version;
+                    src               = ./.;
+                    npmDepsHash       = "sha256-gRcvPyZZ1kdR4ig1rNBwNMP5k0PkJcevZVgpFIq/wPI=";
+                    nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
+                    postPatch         = 
                     ''
-                        mkdir -p $out/bin
-                        chmod +x $out/lib/node_modules/${name}/main.js
-                        ln -s $out/lib/node_modules/${name}/main.js $out/bin/main.js
+                        patchShebangs ./src/crd2jsonschema.sh
+                        patchShebangs ./src/oas3tojsonschema4.js
+                        patchShebangs ./test/*.bats
+                    '';
+                    installPhase      =
+                    ''
+                        runHook preInstall
+                        install -Dm755 ./src/crd2jsonschema.sh $out/bin/crd2jsonschema
+                        install -Dm755 ./dist/oas3tojsonschema4 $out/bin/oas3tojsonschema4
+                        runHook postInstall
+                    '';
+                    nativeInstallCheckInputs = with pkgs;
+                    [ 
+                        (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
+                        shellcheck
+                    ] 
+                    ++ runtimeDeps;
+
+                    doInstallCheck = true;
+                    installCheckPhase = ''
+                        runHook preInstallCheck
+                        shellcheck ./src/*.sh
+                        shellcheck -x ./test/*.bats
+                        bats --filter-tags \!internet ./test
+                        runHook postInstallCheck
+                    '';
+
+                    postFixup =
+                    ''
+                        wrapProgram $out/bin/crd2jsonschema \
+                            --prefix PATH : "${pkgs.lib.makeBinPath runtimeDeps}:$out/bin"
                     '';
                 };
 
+                default = self.packages.${system}.crd2jsonschema;
+            };
+
+            apps = let 
+                registryUser          = ''"$CI_REGISTRY_USER"'';
+                registryPassword      = ''"$CI_REGISTRY_PASSWORD"'';
+                registryBaseUrl       = ''"$CI_REGISTRY_BASE_URL"'';
+                imageUrlWithoutTag    = ''"$CI_REGISTRY_IMAGE"'';
+            in 
+            {
+                dockerIntegrationTest = 
+                {
+                    type = "app"; 
+                    program = "${pkgs.writeShellApplication
+                    {
+                        name          = "dockerIntegrationTest.sh";
+                        runtimeInputs = with pkgs; [ docker ];
+                        text          = 
+                        ''
+                            ${self.packages.${system}.crd2jsonschema-amd64-image} | docker load
+                            docker run ${name}:${version} \
+                                https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
+                            docker run -v "$(pwd)":/app ${name}:${version} -a -o out \
+                                test/fixtures/*.crd.yml
+                            cat out/route_v1.json
+                            cat out/all.json
+                            rm out/route_v1.json
+                            rm out/all.json
+                        '';
+                    }}/bin/dockerIntegrationTest.sh";
+                };
+
+                push-amd64-image-to-registry =
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.pushContainerToRegistry 
+                    { 
+                        inherit registryUser registryPassword;
+                        streamLayeredImage = self.packages.${system}.crd2jsonschema-amd64-image;
+                        imageUrlWithTag    = "${imageUrlWithoutTag}-amd64:${version}";
+                    }}/bin/pushToRegistry.sh"; 
+                };
+
+                push-arm64-image-to-registry =
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.pushContainerToRegistry 
+                    { 
+                        inherit registryUser registryPassword;
+                        streamLayeredImage = self.packages.${system}.crd2jsonschema-arm64-image;
+                        imageUrlWithTag    = "${imageUrlWithoutTag}-arm64:${version}";
+                    }}/bin/pushToRegistry.sh"; 
+                };
+
+                create-multi-arch-manifest = 
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.createMultiArchManifest 
+                    {
+                        inherit registryUser registryPassword imageUrlWithoutTag;
+                        tag = version;
+                    }}/bin/createMultiArchManifest.sh"; 
+                };
+
+                retag-image = 
+                { 
+                    type = "app"; 
+                    program = "${ci-lib.retagImage 
+                    {
+                        inherit registryUser registryPassword registryBaseUrl;
+                        imageUrlWithTag = "${imageUrlWithoutTag}:${version}";
+                        newTag = "latest";
+                    }}/bin/retagImage.sh"; 
+                };
+
+                default =
+                {
+                    type = "app";
+                    program = "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema";
+                    cmdArgs = [ "-v" ];
+                };
             };
 
             devShells.default = pkgs.mkShell
@@ -67,7 +186,9 @@
                     shellcheck
                     yq-go
                     nodejs
-                [   (pkgs-bats.bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
+                    esbuild
+                [   (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
+                    docker
                 ] 
                 ++ pkgs.lib.optionals 
                     (system == "x86_64-linux" || system == "aarch64-linux") 

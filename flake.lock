@@ -1,12 +1,32 @@
 {
   "nodes": {
+    "ci-flake-lib": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1678981859,
+        "narHash": "sha256-UcWYTbrFP084nrJNoWDFRi31KpxNJjtzVdL5kMcTZkQ=",
+        "owner": "tricktron",
+        "repo": "ci-flake-lib",
+        "rev": "7015c8a781200560851f8c38a1b2740222556c26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tricktron",
+        "repo": "ci-flake-lib",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "locked": {
-        "lastModified": 1676283394,
-        "narHash": "sha256-XX2f9c3iySLCw54rJ/CZs+ZK6IQy7GXNY4nSOyu2QG4=",
+        "lastModified": 1678901627,
+        "narHash": "sha256-U02riOqrKKzwjsxc/400XnElV+UtPUQWpANPlyazjH0=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "3db36a8b464d0c4532ba1c7dda728f4576d6d073",
+        "rev": "93a2b84fc4b70d9e089d029deacc3583435c2ed6",
         "type": "github"
       },
       "original": {
@@ -17,42 +37,26 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1678455506,
-        "narHash": "sha256-Bx3kjT/323qE1N94iNUm0rhj8e8NdhQ+Jl8MkZ7gHgw=",
+        "lastModified": 1678945781,
+        "narHash": "sha256-pbzf5NOfUG+JZeGTx+WvOkL/Vh7mfoRJONTcKOBX4cU=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f991762ea1345d850c06cd9947700f3b08a12616",
+        "rev": "a094167161f52239e7a0f6ff23eca03173b40973",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-bats": {
-      "locked": {
-        "lastModified": 1678528653,
-        "narHash": "sha256-D0JICnOHJwKYtaBJmcBrOD5TGkoCkKs9YHJcbH0yCNI=",
-        "owner": "tricktron",
-        "repo": "nixpkgs",
-        "rev": "f4fcb40eb45ccd25d5631d81d7fb410d4ab1f58e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tricktron",
-        "ref": "f-bats-1.9.0",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs-fork": {
       "locked": {
-        "lastModified": 1678446637,
-        "narHash": "sha256-m2c/S4WYLdHde01Yzab3J6Nqtk5cj60opFmlFJ3tSW0=",
+        "lastModified": 1678869837,
+        "narHash": "sha256-H3K755V2zFu1DyL6+jaMkpXVLuCo7zqzQkdSVWOr50o=",
         "owner": "tricktron",
         "repo": "nixpkgs",
-        "rev": "b5d534566ab71e4c9d598ae1a4b4855efa640eb0",
+        "rev": "b4c990dbe8183aedb744bacc0291088f4b04b56a",
         "type": "github"
       },
       "original": {
@@ -64,9 +68,9 @@
     },
     "root": {
       "inputs": {
+        "ci-flake-lib": "ci-flake-lib",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-bats": "nixpkgs-bats",
         "nixpkgs-fork": "nixpkgs-fork"
       }
     }
