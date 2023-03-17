@@ -21,16 +21,9 @@
         let 
             pkgs        = import nixpkgs { inherit system; overlays = builtins.attrValues ci-flake-lib.overlays; };
             inherit (pkgs) ci-lib;
+            name        = self.packages.${system}.crd2jsonschema.name;
+            version     = self.packages.${system}.crd2jsonschema.version;
             pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
-            runtimeDeps = with pkgs;
-            [ 
-                yq-go 
-                nodejs
-                wget
-                coreutils
-            ];
-            name        = "crd2jsonschema";
-            version     = "1.0.0";
             crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
             {
                 inherit name;
@@ -53,56 +46,16 @@
             {
                 crd2jsonschema-amd64-image = crd2jsonschema-image pkgs.pkgsStatic;
                 crd2jsonschema-arm64-image = crd2jsonschema-image pkgs.pkgsCross.aarch64-multiplatform-musl.pkgsStatic;
-                crd2jsonschema = pkgs.buildNpmPackage
-                {
-                    inherit name version;
-                    src               = ./.;
-                    npmDepsHash       = "sha256-gRcvPyZZ1kdR4ig1rNBwNMP5k0PkJcevZVgpFIq/wPI=";
-                    nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
-                    postPatch         = 
-                    ''
-                        patchShebangs ./src/crd2jsonschema.sh
-                        patchShebangs ./src/oas3tojsonschema4.js
-                        patchShebangs ./test/*.bats
-                    '';
-                    installPhase      =
-                    ''
-                        runHook preInstall
-                        install -Dm755 ./src/crd2jsonschema.sh $out/bin/crd2jsonschema
-                        install -Dm755 ./dist/oas3tojsonschema4 $out/bin/oas3tojsonschema4
-                        runHook postInstall
-                    '';
-                    nativeInstallCheckInputs = with pkgs;
-                    [ 
-                        (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
-                        shellcheck
-                    ] 
-                    ++ runtimeDeps;
-
-                    doInstallCheck = true;
-                    installCheckPhase = ''
-                        runHook preInstallCheck
-                        shellcheck ./src/*.sh
-                        shellcheck -x ./test/*.bats
-                        bats --filter-tags \!internet ./test
-                        runHook postInstallCheck
-                    '';
-
-                    postFixup =
-                    ''
-                        wrapProgram $out/bin/crd2jsonschema \
-                            --prefix PATH : "${pkgs.lib.makeBinPath runtimeDeps}:$out/bin"
-                    '';
-                };
+                crd2jsonschema = pkgs.callPackage ./crd2jsonschema.nix { };
 
                 default = self.packages.${system}.crd2jsonschema;
             };
 
             overlays =
             {
-                crd2jsonschema = _: _:
+                crd2jsonschema = final: _:
                 {
-                    crd2jsonschema = self.packages.${system}.crd2jsonschema; 
+                    crd2jsonschema = final.callPackage ./crd2jsonschema.nix { };
                 };
             };
 
@@ -190,14 +143,11 @@
             {
                packages = with pkgs;
                 [
-                    wget
-                    shellcheck
-                    yq-go
-                    nodejs
                     esbuild
                 [   (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
                     docker
                 ] 
+                ++ self.packages.${system}.crd2jsonschema.passthru.runtimeDeps
                 ++ pkgs.lib.optionals 
                     (system == "x86_64-linux" || system == "aarch64-linux") 
                 [ pkgs-fork.kcov ];
