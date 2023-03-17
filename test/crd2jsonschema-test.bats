@@ -135,7 +135,7 @@ Options:
     run get_openapi_v3_schema "$crd_without_openapi_v3_schema"
     assert_failure
     assert_output "null
-OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a CRD?"
+OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a valid CRD?"
 }
 
 @test "should convert single OpenAPI V3 YAML CRD file to JSON schema draft 4" {

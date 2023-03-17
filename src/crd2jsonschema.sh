@@ -26,7 +26,7 @@ function get_openapi_v3_schema()
     local crd
     crd="$1"
     yq -e '.spec.versions[0].schema.openAPIV3Schema' "$crd" 2>/dev/null || \
-        { echo "OpenAPI V3 schema not found. Is $crd a CRD?" >&2; exit 1; }
+        { echo "OpenAPI V3 schema not found. Is $crd a valid CRD?" >&2; exit 1; }
 }
 
 function get_crd_kind()
