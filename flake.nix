@@ -10,6 +10,13 @@
     };
 
     outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, ci-flake-lib }:
+    {
+        overlays.default = final: _: 
+        { 
+            crd2jsonschema = final.callPackage ./crd2jsonschema.nix { }; 
+        };
+    }
+    //
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -19,7 +26,11 @@
     ]
     (system:
         let 
-            pkgs        = import nixpkgs { inherit system; overlays = builtins.attrValues ci-flake-lib.overlays; };
+            inherit (nixpkgs) lib;
+            pkgs        = (nixpkgs.legacyPackages.${system}.extend
+            (
+                lib.composeManyExtensions (builtins.attrValues ci-flake-lib.overlays)
+            ));
             inherit (pkgs) ci-lib;
             name        = self.packages.${system}.crd2jsonschema.name;
             version     = self.packages.${system}.crd2jsonschema.version;
@@ -49,14 +60,6 @@
                 crd2jsonschema = pkgs.callPackage ./crd2jsonschema.nix { };
 
                 default = self.packages.${system}.crd2jsonschema;
-            };
-
-            overlays =
-            {
-                crd2jsonschema = final: _:
-                {
-                    crd2jsonschema = final.callPackage ./crd2jsonschema.nix { };
-                };
             };
 
             apps = let 
