@@ -7,6 +7,7 @@ let
         shellcheck
         yq-go
         nodejs
+        coreutils
     ];
 in
 pkgs.buildNpmPackage
