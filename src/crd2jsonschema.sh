@@ -18,6 +18,18 @@ Options:
   -v        Print the version of crd2jsonschema
   -h        Print this help
 
+Examples:
+
+# convert a single CRD file and print to stdout
+crd2jsonschema your-crd.yml
+
+# convert a single CRD from a URL and write as kind_version.json to output dir 
+crd2jsonschema -o output-dir https://example.com/your-crd.yml
+
+# convert multiple CRDs, write kind_version.json files to output dir and
+# create all.json with all references to schemas
+crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
+crd2jsonschema -a -o ./output ./crds/*.yml
 EOF
 }
 
