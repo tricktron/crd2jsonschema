@@ -126,6 +126,10 @@ function main()
     
     shift $((OPTIND-1))
 
+    if [[ "$#" -eq 0 ]]; then
+        cli_help; exit 0
+    fi
+
     local crd_filenames=()
     local current_crd
     for crd in "$@"

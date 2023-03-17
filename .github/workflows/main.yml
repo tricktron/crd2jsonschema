@@ -72,12 +72,15 @@ jobs:
           verbose: true
 
       - name: Build & push crd2jsonschema amd64 image
+        if: github.ref == 'refs/heads/main'
         run: nix run .#push-amd64-image-to-registry
       
       - name: Build & push crd2jsonschema arm64 image
+        if: github.ref == 'refs/heads/main'
         run: nix run .#push-arm64-image-to-registry
 
       - name: Create multi arch image and retag it as latest
+        if: github.ref == 'refs/heads/main'
         run: |
           nix run .#create-multi-arch-manifest
           nix run .#retag-image

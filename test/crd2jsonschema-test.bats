@@ -157,13 +157,30 @@ Options:
 }
 
 @test "should print help given unknown option" {
-    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -foo convert \
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh -foo \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
     assert_failure
     assert_output "
 Option does not exist : -foo
 
+Usage: crd2jsonschema [options] [crd]...
+
+Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
+JSON schema draft 4. CRDs can be specified as a file path or as a URL.
+
+Options:
+  -o path   Output directory for JSON schema files
+  -a        Create all.json with all references to schemas (intended for 
+            use with yaml language server)
+  -v        Print the version of crd2jsonschema
+  -h        Print this help"
+}
+
+@test "should print help given no crd" {
+    run "$PROJECT_ROOT"/src/crd2jsonschema.sh
+
+    assert_output "
 Usage: crd2jsonschema [options] [crd]...
 
 Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
