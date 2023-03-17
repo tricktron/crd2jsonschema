@@ -62,7 +62,7 @@ function convert_to_strict_json()
         with(.. | select(has("properties")) | 
         select(has("additionalProperties") | not); 
             .additionalProperties = false)
-    '
+    ' 2>/dev/null
 }
 
 function convert_to_jsonschema4()
