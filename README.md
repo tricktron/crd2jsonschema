@@ -1,5 +1,6 @@
 ![CI](https://github.com/tricktron/crd2jsonschema/actions/workflows/main.yml/badge.svg)
 [![codecov](https://codecov.io/gh/tricktron/crd2jsonschema/branch/main/graph/badge.svg?token=H2WRI0VUCQ)](https://codecov.io/gh/tricktron/crd2jsonschema)
+![licence](https://img.shields.io/github/license/tricktron/crd2jsonschema?color=blue)
 
 # crd2jsonschema
 
@@ -7,7 +8,32 @@ Converts Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to J
 
 ## Usage
 
-https://github.com/tricktron/crd2jsonschema/blob/3c32a2a53cc553a766a365e8de74f2b2aab94edf/src/crd2jsonschema.sh#L9-L32
+```bash
+Usage: crd2jsonschema [options] [crd]...
+
+Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
+JSON schema draft 4. CRDs can be specified as a file path or as a URL.
+
+Options:
+  -o path   Output directory for JSON schema files
+  -a        Create all.json with all references to schemas (intended for 
+            use with yaml language server)
+  -v        Print the version of crd2jsonschema
+  -h        Print this help
+
+Examples:
+
+# convert a single CRD file and print to stdout
+crd2jsonschema your-crd.yml
+
+# convert a single CRD from a URL and write as kind_version.json to output dir 
+crd2jsonschema -o output-dir https://example.com/your-crd.yml
+
+# convert multiple CRDs, write kind_version.json files to output dir and
+# create all.json with all references to schemas
+crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
+crd2jsonschema -a -o ./output ./crds/*.yml
+```
 
 ## Installation
 
