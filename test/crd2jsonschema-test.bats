@@ -56,6 +56,8 @@ teardown() {
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
     assert_file_exist "$TEST_TEMP_DIR"/route_v1.json
+    assert_file_not_exist "$TEST_TEMP_DIR"/all.json
+    
     run cat "$TEST_TEMP_DIR"/route_v1.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }
@@ -115,6 +117,7 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
 
     assert_file_exist "$TEST_TEMP_DIR"/route_v1.json
     assert_file_exist "$TEST_TEMP_DIR"/sealedsecret_v1alpha1.json
+    assert_file_not_exist "$TEST_TEMP_DIR"/all.json
     
     run cat "$TEST_TEMP_DIR"/route_v1.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
@@ -211,6 +214,8 @@ Options:
         "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
+    assert_file_exist "$TEST_TEMP_DIR"/route_v1.json
+    assert_file_exist "$TEST_TEMP_DIR"/sealedsecret_v1alpha1.json
     assert_file_exist "$TEST_TEMP_DIR"/all.json
     
     run cat "$TEST_TEMP_DIR"/all.json
@@ -222,6 +227,7 @@ Options:
         "$PROJECT_ROOT"/test/fixtures/openshift-ingresscontroller-v1.crd.yml
 
     assert_file_exist "$TEST_TEMP_DIR"/ingresscontroller_v1.json
+    assert_file_not_exist "$TEST_TEMP_DIR"/all.json
 
     run cat "$TEST_TEMP_DIR"/ingresscontroller_v1.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-ingresscontroller-v1-jsonschema4.json)"

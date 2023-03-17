@@ -142,7 +142,7 @@ function main()
             current_crd="$crd"
         fi
 
-        if [[ -d "${OUTPUT_DIR-:}" ]]; then
+        if [[ -d "${OUTPUT_DIR-}" ]]; then
             json_schema_filename="$(get_jsonschema_file_name "$current_crd")"
             crd_filenames+=("$json_schema_filename")
             convert_crd_openapiv3_schema_to_jsonschema "$current_crd" > "$OUTPUT_DIR/$json_schema_filename"
@@ -151,7 +151,7 @@ function main()
         fi
     done
 
-    if [[ -d "${OUTPUT_DIR-:}" && -n "${CREATE_ALL_JSON-:}" ]]; then
+    if [[ -d "${OUTPUT_DIR-}" && -n "${CREATE_ALL_JSON-}" ]]; then
         create_all_jsonschema "${crd_filenames[@]}" > "$OUTPUT_DIR/all.json"
     fi
 }
