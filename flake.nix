@@ -7,16 +7,13 @@
         url                        = "github:tricktron/ci-flake-lib";
         inputs.nixpkgs.follows     = "nixpkgs";
     };
-
-    outputs = { self, nixpkgs, flake-utils, ci-flake-lib }:
+    inputs.flake-compat       = 
     {
-        overlays.default = final: _: 
-        { 
-            crd2jsonschema = final.callPackage ./crd2jsonschema.nix { }; 
-        };
+        url = "github:edolstra/flake-compat";
+        flake = false;
+    };
 
-    }
-    //
+    outputs = { self, nixpkgs, flake-utils, ci-flake-lib, ... }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -42,6 +39,7 @@
             inherit (pkgs) ci-lib;
             name                 = self.packages.${system}.crd2jsonschema.name;
             version              = self.packages.${system}.crd2jsonschema.version;
+            
             crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
             {
                 inherit name;
