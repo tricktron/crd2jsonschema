@@ -2,19 +2,19 @@
     description               = "crd2jsonschema-dev-shell";
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
-    inputs.nixpkgs-fork.url   = "github:tricktron/nixpkgs/f-kcov-41";
     inputs.ci-flake-lib       =
     {
         url                        = "github:tricktron/ci-flake-lib";
         inputs.nixpkgs.follows     = "nixpkgs";
     };
 
-    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, ci-flake-lib }:
+    outputs = { self, nixpkgs, flake-utils, ci-flake-lib }:
     {
         overlays.default = final: _: 
         { 
             crd2jsonschema = final.callPackage ./crd2jsonschema.nix { }; 
         };
+
     }
     //
     flake-utils.lib.eachSystem
@@ -25,26 +25,37 @@
         "x86_64-darwin"
     ]
     (system:
-        let 
+        let
+            kcov-overlay = final: prev: 
+            {
+                kcov = (import (builtins.fetchTarball
+                {
+                    url    = "https://github.com/NixOS/nixpkgs/archive/b4c990dbe8183aedb744bacc0291088f4b04b56a.tar.gz";
+                    sha256 = "sha256:0jp7mdimalj78arkmvx8w0pdb5cjihvgmyi21ysmpk3njpkvnwhz";
+                }) { inherit system; }).kcov;
+            };
             inherit (nixpkgs) lib;
             pkgs        = (nixpkgs.legacyPackages.${system}.extend
             (
-                lib.composeManyExtensions (builtins.attrValues ci-flake-lib.overlays)
+                lib.composeManyExtensions (builtins.attrValues ci-flake-lib.overlays ++ [ kcov-overlay ])
             ));
             inherit (pkgs) ci-lib;
-            name        = self.packages.${system}.crd2jsonschema.name;
-            version     = self.packages.${system}.crd2jsonschema.version;
-            pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
+            name                 = self.packages.${system}.crd2jsonschema.name;
+            version              = self.packages.${system}.crd2jsonschema.version;
             crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
             {
                 inherit name;
-                tag           = version;
-                extraCommands =
+                tag            = version;
+                extraCommands  =
                 ''
                     mkdir -m 0755 {tmp,app}
                 '';
-                contents      = [ pkgs.dockerTools.caCertificates self.packages.${system}.crd2jsonschema ];
-                config        =
+                contents       = 
+                [ 
+                    pkgs.dockerTools.caCertificates 
+                    self.packages.${system}.crd2jsonschema 
+                ];
+                config         =
                 {
                     Entrypoint = [ "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema" ];
                     Cmd        = [ "-h" ];
@@ -57,7 +68,7 @@
             {
                 crd2jsonschema-amd64-image = crd2jsonschema-image pkgs.pkgsStatic;
                 crd2jsonschema-arm64-image = crd2jsonschema-image pkgs.pkgsCross.aarch64-multiplatform-musl.pkgsStatic;
-                crd2jsonschema = pkgs.callPackage ./crd2jsonschema.nix { };
+                crd2jsonschema             = pkgs.callPackage ./crd2jsonschema.nix { };
 
                 default = self.packages.${system}.crd2jsonschema;
             };
@@ -71,7 +82,7 @@
             {
                 dockerIntegrationTest = 
                 {
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${pkgs.writeShellApplication
                     {
                         name          = "dockerIntegrationTest.sh";
@@ -93,7 +104,7 @@
 
                 push-amd64-image-to-registry =
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.pushContainerToRegistry 
                     { 
                         inherit registryUser registryPassword;
@@ -104,7 +115,7 @@
 
                 push-arm64-image-to-registry =
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.pushContainerToRegistry 
                     { 
                         inherit registryUser registryPassword;
@@ -115,7 +126,7 @@
 
                 create-multi-arch-manifest = 
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.createMultiArchManifest 
                     {
                         inherit registryUser registryPassword imageUrlWithoutTag;
@@ -125,7 +136,7 @@
 
                 retag-image = 
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.retagImage 
                     {
                         inherit registryUser registryPassword registryBaseUrl;
@@ -136,7 +147,7 @@
 
                 default =
                 {
-                    type = "app";
+                    type    = "app";
                     program = "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema";
                     cmdArgs = [ "-v" ];
                 };
@@ -147,13 +158,12 @@
                packages = with pkgs;
                 [
                     esbuild
-                [   (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
+                    (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
                     docker
                 ] 
                 ++ self.packages.${system}.crd2jsonschema.passthru.runtimeDeps
-                ++ pkgs.lib.optionals 
-                    (system == "x86_64-linux" || system == "aarch64-linux") 
-                [ pkgs-fork.kcov ];
+                ++ pkgs.lib.optionals (system == "x86_64-linux" || system == "aarch64-linux") 
+                [ pkgs.kcov ];
             };
         }
     );
