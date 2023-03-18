@@ -17,14 +17,13 @@ pkgs.buildNpmPackage
     src               = ./.;
     npmDepsHash       = "sha256-gRcvPyZZ1kdR4ig1rNBwNMP5k0PkJcevZVgpFIq/wPI=";
     nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
-    buildInputs = runtimeDeps;
     postPatch         = 
     ''
         patchShebangs ./src/crd2jsonschema.sh
         patchShebangs ./src/oas3tojsonschema4.js
         patchShebangs ./test/*.bats
     '';
-    installPhase      =
+    installPhase =
     ''
         runHook preInstall
         install -Dm755 ./src/crd2jsonschema.sh $out/bin/crd2jsonschema
@@ -35,14 +34,10 @@ pkgs.buildNpmPackage
     [ 
         (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
         shellcheck
-        wget
-        shellcheck
-        yq-go
-        nodejs
-    ] 
+    ]
     ++ runtimeDeps;
 
-    doInstallCheck = true;
+    doInstallCheck    = true;
     installCheckPhase = ''
         runHook preInstallCheck
         shellcheck ./src/*.sh
