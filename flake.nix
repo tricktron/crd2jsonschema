@@ -2,14 +2,18 @@
     description               = "crd2jsonschema-dev-shell";
     inputs.flake-utils.url    = "github:numtide/flake-utils";
     inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
-    inputs.nixpkgs-fork.url   = "github:tricktron/nixpkgs/f-kcov-41";
     inputs.ci-flake-lib       =
     {
         url                        = "github:tricktron/ci-flake-lib";
         inputs.nixpkgs.follows     = "nixpkgs";
     };
+    inputs.flake-compat       = 
+    {
+        url = "github:edolstra/flake-compat";
+        flake = false;
+    };
 
-    outputs = { self, nixpkgs, flake-utils, nixpkgs-fork, ci-flake-lib }:
+    outputs = { self, nixpkgs, flake-utils, ci-flake-lib, ... }:
     flake-utils.lib.eachSystem
     [ 
         "aarch64-darwin"
@@ -18,29 +22,38 @@
         "x86_64-darwin"
     ]
     (system:
-        let 
-            pkgs        = import nixpkgs { inherit system; overlays = builtins.attrValues ci-flake-lib.overlays; };
+        let
+            kcov-overlay = final: prev: 
+            {
+                kcov = (import (builtins.fetchTarball
+                {
+                    url    = "https://github.com/NixOS/nixpkgs/archive/b4c990dbe8183aedb744bacc0291088f4b04b56a.tar.gz";
+                    sha256 = "sha256:0jp7mdimalj78arkmvx8w0pdb5cjihvgmyi21ysmpk3njpkvnwhz";
+                }) { inherit system; }).kcov;
+            };
+            inherit (nixpkgs) lib;
+            pkgs        = (nixpkgs.legacyPackages.${system}.extend
+            (
+                lib.composeManyExtensions (builtins.attrValues ci-flake-lib.overlays ++ [ kcov-overlay ])
+            ));
             inherit (pkgs) ci-lib;
-            pkgs-fork   = nixpkgs-fork.legacyPackages.${system};
-            runtimeDeps = with pkgs;
-            [ 
-                yq-go 
-                nodejs
-                wget
-                coreutils
-            ];
-            name        = "crd2jsonschema";
-            version     = "1.0.0";
+            name                 = self.packages.${system}.crd2jsonschema.name;
+            version              = self.packages.${system}.crd2jsonschema.version;
+            
             crd2jsonschema-image = pkgs: pkgs.dockerTools.streamLayeredImage
             {
                 inherit name;
-                tag           = version;
-                extraCommands =
+                tag            = version;
+                extraCommands  =
                 ''
                     mkdir -m 0755 {tmp,app}
                 '';
-                contents      = [ pkgs.dockerTools.caCertificates self.packages.${system}.crd2jsonschema ];
-                config        =
+                contents       = 
+                [ 
+                    pkgs.dockerTools.caCertificates 
+                    self.packages.${system}.crd2jsonschema 
+                ];
+                config         =
                 {
                     Entrypoint = [ "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema" ];
                     Cmd        = [ "-h" ];
@@ -53,47 +66,7 @@
             {
                 crd2jsonschema-amd64-image = crd2jsonschema-image pkgs.pkgsStatic;
                 crd2jsonschema-arm64-image = crd2jsonschema-image pkgs.pkgsCross.aarch64-multiplatform-musl.pkgsStatic;
-                crd2jsonschema = pkgs.buildNpmPackage
-                {
-                    inherit name version;
-                    src               = ./.;
-                    npmDepsHash       = "sha256-gRcvPyZZ1kdR4ig1rNBwNMP5k0PkJcevZVgpFIq/wPI=";
-                    nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
-                    postPatch         = 
-                    ''
-                        patchShebangs ./src/crd2jsonschema.sh
-                        patchShebangs ./src/oas3tojsonschema4.js
-                        patchShebangs ./test/*.bats
-                    '';
-                    installPhase      =
-                    ''
-                        runHook preInstall
-                        install -Dm755 ./src/crd2jsonschema.sh $out/bin/crd2jsonschema
-                        install -Dm755 ./dist/oas3tojsonschema4 $out/bin/oas3tojsonschema4
-                        runHook postInstall
-                    '';
-                    nativeInstallCheckInputs = with pkgs;
-                    [ 
-                        (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
-                        shellcheck
-                    ] 
-                    ++ runtimeDeps;
-
-                    doInstallCheck = true;
-                    installCheckPhase = ''
-                        runHook preInstallCheck
-                        shellcheck ./src/*.sh
-                        shellcheck -x ./test/*.bats
-                        bats --filter-tags \!internet ./test
-                        runHook postInstallCheck
-                    '';
-
-                    postFixup =
-                    ''
-                        wrapProgram $out/bin/crd2jsonschema \
-                            --prefix PATH : "${pkgs.lib.makeBinPath runtimeDeps}:$out/bin"
-                    '';
-                };
+                crd2jsonschema             = pkgs.callPackage ./crd2jsonschema.nix { };
 
                 default = self.packages.${system}.crd2jsonschema;
             };
@@ -107,7 +80,7 @@
             {
                 dockerIntegrationTest = 
                 {
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${pkgs.writeShellApplication
                     {
                         name          = "dockerIntegrationTest.sh";
@@ -129,7 +102,7 @@
 
                 push-amd64-image-to-registry =
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.pushContainerToRegistry 
                     { 
                         inherit registryUser registryPassword;
@@ -140,7 +113,7 @@
 
                 push-arm64-image-to-registry =
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.pushContainerToRegistry 
                     { 
                         inherit registryUser registryPassword;
@@ -151,7 +124,7 @@
 
                 create-multi-arch-manifest = 
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.createMultiArchManifest 
                     {
                         inherit registryUser registryPassword imageUrlWithoutTag;
@@ -161,7 +134,7 @@
 
                 retag-image = 
                 { 
-                    type = "app"; 
+                    type    = "app"; 
                     program = "${ci-lib.retagImage 
                     {
                         inherit registryUser registryPassword registryBaseUrl;
@@ -172,7 +145,7 @@
 
                 default =
                 {
-                    type = "app";
+                    type    = "app";
                     program = "${self.packages.${system}.crd2jsonschema}/bin/crd2jsonschema";
                     cmdArgs = [ "-v" ];
                 };
@@ -182,17 +155,13 @@
             {
                packages = with pkgs;
                 [
-                    wget
-                    shellcheck
-                    yq-go
-                    nodejs
                     esbuild
-                [   (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ])) ]
+                    (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
                     docker
                 ] 
-                ++ pkgs.lib.optionals 
-                    (system == "x86_64-linux" || system == "aarch64-linux") 
-                [ pkgs-fork.kcov ];
+                ++ self.packages.${system}.crd2jsonschema.passthru.runtimeDeps
+                ++ pkgs.lib.optionals (system == "x86_64-linux" || system == "aarch64-linux") 
+                [ pkgs.kcov ];
             };
         }
     );
