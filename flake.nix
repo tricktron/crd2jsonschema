@@ -23,18 +23,10 @@
     ]
     (system:
         let
-            kcov-overlay = final: prev: 
-            {
-                kcov = (import (builtins.fetchTarball
-                {
-                    url    = "https://github.com/NixOS/nixpkgs/archive/b4c990dbe8183aedb744bacc0291088f4b04b56a.tar.gz";
-                    sha256 = "sha256:0jp7mdimalj78arkmvx8w0pdb5cjihvgmyi21ysmpk3njpkvnwhz";
-                }) { inherit system; }).kcov;
-            };
             inherit (nixpkgs) lib;
             pkgs        = (nixpkgs.legacyPackages.${system}.extend
             (
-                lib.composeManyExtensions (builtins.attrValues ci-flake-lib.overlays ++ [ kcov-overlay ])
+                lib.composeManyExtensions (builtins.attrValues ci-flake-lib.overlays)
             ));
             inherit (pkgs) ci-lib;
             name                 = self.packages.${system}.crd2jsonschema.name;
