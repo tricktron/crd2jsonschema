@@ -5,7 +5,7 @@ setup() {
     bats_load_library bats-assert
     bats_load_library bats-file
     PROJECT_ROOT="$( cd "$( dirname "$BATS_TEST_FILENAME" )/.." >/dev/null 2>&1 && pwd )"
-    PATH="$PATH:$PROJECT_ROOT/dist"
+    PATH="$PROJECT_ROOT/dist:$PATH"
     TEST_TEMP_DIR="$(temp_make)"
     export BATSLIB_TEMP_PRESERVE=0
     export BATSLIB_TEMP_PRESERVE_ON_FAILURE=0
@@ -171,10 +171,7 @@ crd2jsonschema -a -o ./output ./crds/*.yml"
     crd_without_openapi_v3_schema="$PROJECT_ROOT/test/fixtures/bitnami-sealedsecret-without-openapiv3schema.yml"
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh "$crd_without_openapi_v3_schema"
     assert_failure
-    assert_output "OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a valid CRD?
-{
-    \"\$schema\": \"http://json-schema.org/draft-04/schema#\"
-}"
+    assert_output "OpenAPI V3 schema not found. Is $crd_without_openapi_v3_schema a valid CRD?"
 }
 
 @test "should convert single OpenAPI V3 YAML CRD file to JSON schema draft 4" {

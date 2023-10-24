@@ -1,7 +1,7 @@
 {
     description               = "crd2jsonschema-dev-shell";
     inputs.flake-utils.url    = "github:numtide/flake-utils";
-    inputs.nixpkgs.url        = "github:NixOS/nixpkgs";
+    inputs.nixpkgs.url        = "github:NixOS/nixpkgs/nixos-unstable";
     inputs.ci-flake-lib       =
     {
         url                        = "github:tricktron/ci-flake-lib";

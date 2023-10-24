@@ -86,7 +86,9 @@ function convert_crd_openapiv3_schema_to_jsonschema()
 {
     local crd
     crd="$1"
-    get_openapi_v3_schema "$crd" | convert_to_strict_json | convert_to_jsonschema4
+    local crd_schema
+    crd_schema="$(get_openapi_v3_schema "$crd")" || exit 1
+    echo "$crd_schema" | convert_to_strict_json | convert_to_jsonschema4
 }
 
 function create_all_jsonschema()
@@ -168,7 +170,7 @@ function main()
     fi
 }
 
-CRD2JSONSCHEMA_VERSION="1.0.0"
+CRD2JSONSCHEMA_VERSION="1.0.1"
 export CRD2JSONSCHEMA_VERSION
 
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]

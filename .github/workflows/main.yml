@@ -47,7 +47,7 @@ jobs:
         run: nix develop -c shellcheck -x test/*.bats
 
       - name: Shellcheck src
-        run: nix develop -c shellcheck -x src/*.sh
+        run: nix develop -c shellcheck src/*.sh
 
       - name: Run tests
         run: nix develop -c bats test
