@@ -57,6 +57,14 @@ function get_crd_version()
         { echo ".spec.versions[0].name not found. Is $crd a valid CRD?" >&2; exit 1; }
 }
 
+function get_crd_group()
+{
+    local crd
+    crd="$1"
+    yq -e '.spec.group' "$crd" 2>/dev/null || \
+        { echo ".spec.group not found. Is $crd a valid CRD?" >&2; exit 1; }
+}
+
 function get_jsonschema_file_name()
 {   
     local crd
@@ -65,7 +73,9 @@ function get_jsonschema_file_name()
     crd_kind="$(get_crd_kind "$crd")" || exit 1
     local crd_version
     crd_version="$(get_crd_version "$crd")" || exit 1
-    echo "${crd_kind}_${crd_version}.json"
+    local crd_group
+    crd_group="$(get_crd_group "$crd")" || exit 1
+    echo "${crd_kind}_${crd_group}_${crd_version}.json"
 }
 
 function convert_to_strict_json()
