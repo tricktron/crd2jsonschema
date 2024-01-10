@@ -13,7 +13,7 @@ in
 pkgs.buildNpmPackage
 {
     name              = "crd2jsonschema";
-    version           = "1.0.1";
+    version           = "1.0.2";
     src               = ./.;
     npmDepsHash       = "sha256-lHaBVkSWr4qyHWb6rLF9iV8WW59XCxHvIGYMjrm0lIc=";
     nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
