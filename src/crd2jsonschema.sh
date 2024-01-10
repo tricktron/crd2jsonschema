@@ -23,10 +23,10 @@ Examples:
 # convert a single CRD file and print to stdout
 crd2jsonschema your-crd.yml
 
-# convert a single CRD from a URL and write as kind_version.json to output dir 
+# convert a single CRD from a URL and write as kind_group_version.json to output dir 
 crd2jsonschema -o output-dir https://example.com/your-crd.yml
 
-# convert multiple CRDs, write kind_version.json files to output dir and
+# convert multiple CRDs, write kind_group_version.json files to output dir and
 # create all.json with all references to schemas
 crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
 crd2jsonschema -a -o ./output ./crds/*.yml
@@ -57,6 +57,14 @@ function get_crd_version()
         { echo ".spec.versions[0].name not found. Is $crd a valid CRD?" >&2; exit 1; }
 }
 
+function get_crd_group()
+{
+    local crd
+    crd="$1"
+    yq -e '.spec.group' "$crd" 2>/dev/null || \
+        { echo ".spec.group not found. Is $crd a valid CRD?" >&2; exit 1; }
+}
+
 function get_jsonschema_file_name()
 {   
     local crd
@@ -65,7 +73,9 @@ function get_jsonschema_file_name()
     crd_kind="$(get_crd_kind "$crd")" || exit 1
     local crd_version
     crd_version="$(get_crd_version "$crd")" || exit 1
-    echo "${crd_kind}_${crd_version}.json"
+    local crd_group
+    crd_group="$(get_crd_group "$crd")" || exit 1
+    echo "${crd_kind}_${crd_group}_${crd_version}.json"
 }
 
 function convert_to_strict_json()
@@ -170,7 +180,7 @@ function main()
     fi
 }
 
-CRD2JSONSCHEMA_VERSION="1.0.1"
+CRD2JSONSCHEMA_VERSION="1.0.2"
 export CRD2JSONSCHEMA_VERSION
 
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]

@@ -26,10 +26,10 @@ Examples:
 # convert a single CRD file and print to stdout
 crd2jsonschema your-crd.yml
 
-# convert a single CRD from a URL and write as kind_version.json to output dir 
+# convert a single CRD from a URL and write as kind_group_version.json to output dir 
 crd2jsonschema -o output-dir https://example.com/your-crd.yml
 
-# convert multiple CRDs, write kind_version.json files to output dir and
+# convert multiple CRDs, write kind_group_version.json files to output dir and
 # create all.json with all references to schemas
 crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
 crd2jsonschema -a -o ./output ./crds/*.yml
@@ -42,7 +42,7 @@ crd2jsonschema -a -o ./output ./crds/*.yml
 ```bash
 # convert a single CRD and write to output dir
 docker run --rm -v $(pwd):/app ghcr.io/tricktron/crd2jsonschema -o output your-crd.yaml
-# convert multiple CRDs, write kind_version.json files to output dir and
+# convert multiple CRDs, write kind_group_version.json files to output dir and
 # create all.json with all references to schemas
 docker run --rm -v $(pwd):/app ghcr.io/tricktron/crd2jsonschema -a -o output crds/*.crd.yml
 ```
