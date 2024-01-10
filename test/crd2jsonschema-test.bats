@@ -44,10 +44,10 @@ Examples:
 # convert a single CRD file and print to stdout
 crd2jsonschema your-crd.yml
 
-# convert a single CRD from a URL and write as kind_version.json to output dir 
+# convert a single CRD from a URL and write as kind_group_version.json to output dir 
 crd2jsonschema -o output-dir https://example.com/your-crd.yml
 
-# convert multiple CRDs, write kind_version.json files to output dir and
+# convert multiple CRDs, write kind_group_version.json files to output dir and
 # create all.json with all references to schemas
 crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
 crd2jsonschema -a -o ./output ./crds/*.yml"
@@ -78,10 +78,10 @@ Examples:
 # convert a single CRD file and print to stdout
 crd2jsonschema your-crd.yml
 
-# convert a single CRD from a URL and write as kind_version.json to output dir 
+# convert a single CRD from a URL and write as kind_group_version.json to output dir 
 crd2jsonschema -o output-dir https://example.com/your-crd.yml
 
-# convert multiple CRDs, write kind_version.json files to output dir and
+# convert multiple CRDs, write kind_group_version.json files to output dir and
 # create all.json with all references to schemas
 crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
 crd2jsonschema -a -o ./output ./crds/*.yml"
@@ -108,10 +108,10 @@ Examples:
 # convert a single CRD file and print to stdout
 crd2jsonschema your-crd.yml
 
-# convert a single CRD from a URL and write as kind_version.json to output dir 
+# convert a single CRD from a URL and write as kind_group_version.json to output dir 
 crd2jsonschema -o output-dir https://example.com/your-crd.yml
 
-# convert multiple CRDs, write kind_version.json files to output dir and
+# convert multiple CRDs, write kind_group_version.json files to output dir and
 # create all.json with all references to schemas
 crd2jsonschema -a -o ./output your-crd1.yml your-crd2.yml
 crd2jsonschema -a -o ./output ./crds/*.yml"
@@ -138,13 +138,13 @@ crd2jsonschema -a -o ./output ./crds/*.yml"
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }
 
-@test "should create kind_version.json file name from CRD metadata" {
+@test "should create kind_group_version.json file name from CRD metadata" {
     . "$PROJECT_ROOT"/src/crd2jsonschema.sh
 
     run get_jsonschema_file_name \
         "$PROJECT_ROOT/test/fixtures/openshift-route-v1.crd.yml"
 
-    assert_output "route_v1.json"
+    assert_output "route_route.openshift.io_v1.json"
 }
 
 @test "should exit if crd has no names.singular metadata" {
@@ -185,10 +185,10 @@ crd2jsonschema -a -o ./output ./crds/*.yml"
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
-    assert_file_exist "$TEST_TEMP_DIR"/route_v1.json
+    assert_file_exist "$TEST_TEMP_DIR"/route_route.openshift.io_v1.json
     assert_file_not_exist "$TEST_TEMP_DIR"/all.json
     
-    run cat "$TEST_TEMP_DIR"/route_v1.json
+    run cat "$TEST_TEMP_DIR"/route_route.openshift.io_v1.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
 }
 
@@ -223,13 +223,13 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml \
         "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml
 
-    assert_file_exist "$TEST_TEMP_DIR"/route_v1.json
-    assert_file_exist "$TEST_TEMP_DIR"/sealedsecret_v1alpha1.json
+    assert_file_exist "$TEST_TEMP_DIR"/route_route.openshift.io_v1.json
+    assert_file_exist "$TEST_TEMP_DIR"/sealedsecret_bitnami.com_v1alpha1.json
     assert_file_not_exist "$TEST_TEMP_DIR"/all.json
     
-    run cat "$TEST_TEMP_DIR"/route_v1.json
+    run cat "$TEST_TEMP_DIR"/route_route.openshift.io_v1.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-route-jsonschema4.json)"
-    run cat "$TEST_TEMP_DIR"/sealedsecret_v1alpha1.json
+    run cat "$TEST_TEMP_DIR"/sealedsecret_bitnami.com_v1alpha1.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-bitnami-sealedsecret-jsonschema4.json)"
 }
 
@@ -241,7 +241,7 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
     
     run cat "$TEST_TEMP_DIR"/all.json
     # shellcheck disable=SC2016
-    assert_output "$(yq -o json -I 4 -n '{"oneOf": [{"$ref": "sealedsecret_v1alpha1.json"}]}')"
+    assert_output "$(yq -o json -I 4 -n '{"oneOf": [{"$ref": "sealedsecret_bitnami.com_v1alpha1.json"}]}')"
 }
 
 @test "should create all.json with multiple references given -a option" {
@@ -249,8 +249,8 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
         "$PROJECT_ROOT"/test/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml \
         "$PROJECT_ROOT"/test/fixtures/openshift-route-v1.crd.yml
 
-    assert_file_exist "$TEST_TEMP_DIR"/route_v1.json
-    assert_file_exist "$TEST_TEMP_DIR"/sealedsecret_v1alpha1.json
+    assert_file_exist "$TEST_TEMP_DIR"/route_route.openshift.io_v1.json
+    assert_file_exist "$TEST_TEMP_DIR"/sealedsecret_bitnami.com_v1alpha1.json
     assert_file_exist "$TEST_TEMP_DIR"/all.json
     
     run cat "$TEST_TEMP_DIR"/all.json
@@ -261,9 +261,9 @@ Output directory does not exist: $TEST_TEMP_DIR/non-existing-dir"
     run "$PROJECT_ROOT"/src/crd2jsonschema.sh -o "$TEST_TEMP_DIR" \
         "$PROJECT_ROOT"/test/fixtures/openshift-ingresscontroller-v1.crd.yml
 
-    assert_file_exist "$TEST_TEMP_DIR"/ingresscontroller_v1.json
+    assert_file_exist "$TEST_TEMP_DIR"/ingresscontroller_operator.openshift.io_v1.json
     assert_file_not_exist "$TEST_TEMP_DIR"/all.json
 
-    run cat "$TEST_TEMP_DIR"/ingresscontroller_v1.json
+    run cat "$TEST_TEMP_DIR"/ingresscontroller_operator.openshift.io_v1.json
     assert_output "$(cat "$PROJECT_ROOT"/test/fixtures/expected-openshift-ingresscontroller-v1-jsonschema4.json)"
 }
