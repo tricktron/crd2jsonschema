@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 env:
@@ -20,51 +20,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Nix with Flakes support and Haskell Nix binary cache
-        uses: cachix/install-nix-action@v19
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.13.3/install
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            substituters = https://hydra.iohk.io https://cache.nixos.org
-            trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            allowed-users = *
+        uses: cachix/install-nix-action@v31
       - name: Use Cachix to pull and push binary cache
-        uses: cachix/cachix-action@v12
+        uses: cachix/cachix-action@v16
         with:
           name: tricktron
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      
       - name: Cache dev shell & install Npm dependencies
         run: |
           nix develop -c npm ci
           nix develop -c npm run build
-          
+
       - name: Shellcheck tests
-        run: nix develop -c shellcheck -x test/*.bats
+        run: nix develop -c shellcheck -x tests/**/*.sh
 
       - name: Shellcheck src
         run: nix develop -c shellcheck src/*.sh
 
       - name: Run tests
-        run: nix develop -c bats test
+        run: nix develop -c bashunit tests
 
       - name: Run Docker integration test
         run: nix run .#dockerIntegrationTest
 
       - name: Generate coverage
         run: >-
-          nix develop -c kcov 
+          nix develop -c kcov
           --clean
           --include-path=src
-          --include-pattern=.sh 
-          coverage bats test
+          --include-pattern=.sh
+          coverage bashunit tests
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage
@@ -74,7 +66,7 @@ jobs:
       - name: Build & push crd2jsonschema amd64 image
         if: github.ref == 'refs/heads/main'
         run: nix run .#push-amd64-image-to-registry
-      
+
       - name: Build & push crd2jsonschema arm64 image
         if: github.ref == 'refs/heads/main'
         run: nix run .#push-arm64-image-to-registry
