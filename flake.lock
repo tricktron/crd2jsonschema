@@ -70,12 +70,29 @@
         "type": "github"
       }
     },
+    "nixpkgs-fork": {
+      "locked": {
+        "lastModified": 1743873793,
+        "narHash": "sha256-z/bIzwG7EDapq4dnDM76N5XghWUo7U+LZMDRRo8uPPs=",
+        "owner": "tricktron",
+        "repo": "nixpkgs",
+        "rev": "26ca6476bc76d48b6cc73d2bb5eb1489276905c4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tricktron",
+        "ref": "f-bashunit",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "ci-flake-lib": "ci-flake-lib",
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-fork": "nixpkgs-fork"
       }
     },
     "systems": {
