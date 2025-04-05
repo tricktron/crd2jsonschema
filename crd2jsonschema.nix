@@ -1,8 +1,8 @@
-{ pkgs ? import ./nixpkgs.nix { } }:
+{ pkgs, pkgs-fork }:
 
-let 
+let
     runtimeDeps = with pkgs;
-    [ 
+    [
         wget
         shellcheck
         yq-go
@@ -13,15 +13,13 @@ in
 pkgs.buildNpmPackage
 {
     name              = "crd2jsonschema";
-    version           = "1.0.2";
+    version           = "1.0.3";
     src               = ./.;
-    npmDepsHash       = "sha256-lHaBVkSWr4qyHWb6rLF9iV8WW59XCxHvIGYMjrm0lIc=";
+    npmDepsHash       = "sha256-a3aS73p6fBSQQIl3RhiAeMnGqTPaFzA2ulhBUG6TMEM=";
     nativeBuildInputs = with pkgs; [ makeBinaryWrapper esbuild ];
-    postPatch         = 
+    postPatch         =
     ''
-        patchShebangs ./src/crd2jsonschema.sh
-        patchShebangs ./src/oas3tojsonschema4.js
-        patchShebangs ./test/*.bats
+        patchShebangs src/crd2jsonschema.sh patchShebangs src/oas3tojsonschema4.js patchShebangs tests
     '';
     installPhase =
     ''
@@ -30,19 +28,21 @@ pkgs.buildNpmPackage
         install -Dm755 ./dist/oas3tojsonschema4 $out/libexec/oas3tojsonschema4
         runHook postInstall
     '';
+
     nativeInstallCheckInputs = with pkgs;
-    [ 
-        (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
+    [
         shellcheck
     ]
+    ++ [ pkgs-fork.bashunit ]
     ++ runtimeDeps;
 
     doInstallCheck    = true;
     installCheckPhase = ''
         runHook preInstallCheck
         shellcheck ./src/*.sh
-        shellcheck -x ./test/*.bats
-        bats --filter-tags \!internet ./test
+        shellcheck -x ./tests/**/*.sh
+        export NO_INTERNET=1
+        bashunit tests
         runHook postInstallCheck
     '';
 

@@ -60,7 +60,7 @@
             {
                 crd2jsonschema-amd64-image = crd2jsonschema-image pkgs.pkgsStatic;
                 crd2jsonschema-arm64-image = crd2jsonschema-image pkgs.pkgsCross.aarch64-multiplatform-musl.pkgsStatic;
-                crd2jsonschema             = pkgs.callPackage ./crd2jsonschema.nix { };
+                crd2jsonschema             = pkgs.callPackage ./crd2jsonschema.nix { inherit pkgs pkgs-fork; };
 
                 default = self.packages.${system}.crd2jsonschema;
             };
@@ -150,7 +150,6 @@
                packages = with pkgs;
                 [
                     esbuild
-                    (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
                     docker
                 ]
                 ++ [ pkgs-fork.bashunit ]

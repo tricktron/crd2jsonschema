@@ -88,6 +88,10 @@ function test_should_exit_if_output_directory_does_not_exist()
 
 function test_should_download_and_convert_single_OpenAPI_V3_YAML_CRD_http_file_to_JSON_schema_draft_4()
 {
+    if [[ -n $NO_INTERNET ]]; then
+        skip && return
+    fi
+
     local expected_json_schema json_schema
     expected_json_schema=$(cat "$ROOT_DIR/tests/fixtures/expected-bitnami-sealedsecret-jsonschema4.json")
 
