@@ -8,12 +8,12 @@ function cli_help()
 
 Usage: crd2jsonschema [options] [crd]...
 
-Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to 
+Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to
 JSON schema draft 4. CRDs can be specified as a file path or as a URL.
 
 Options:
   -o path   Output directory for JSON schema files
-  -a        Create all.json with all references to schemas (intended for 
+  -a        Create all.json with all references to schemas (intended for
             use with yaml language server)
   -v        Print the version of crd2jsonschema
   -h        Print this help
@@ -23,7 +23,7 @@ Examples:
 # convert a single CRD file and print to stdout
 crd2jsonschema your-crd.yml
 
-# convert a single CRD from a URL and write as kind_group_version.json to output dir 
+# convert a single CRD from a URL and write as kind_group_version.json to output dir
 crd2jsonschema -o output-dir https://example.com/your-crd.yml
 
 # convert multiple CRDs, write kind_group_version.json files to output dir and
@@ -66,7 +66,7 @@ function get_crd_group()
 }
 
 function get_jsonschema_file_name()
-{   
+{
     local crd
     crd="$1"
     local crd_kind
@@ -81,8 +81,8 @@ function get_jsonschema_file_name()
 function convert_to_strict_json()
 {
     yq -e -o json -I 4 '
-        with(.. | select(has("properties")) | 
-        select(has("additionalProperties") | not); 
+        with(.. | select(has("properties")) |
+        select(has("additionalProperties") | not);
             .additionalProperties = false)
     ' 2>/dev/null
 }
@@ -147,7 +147,7 @@ function main()
             ;;
     esac
     done
-    
+
     shift $((OPTIND-1))
 
     if [[ "$#" -eq 0 ]]; then
@@ -157,7 +157,7 @@ function main()
     local crd_filenames=()
     local current_crd
     for crd in "$@"
-    do  
+    do
         if [[ "$crd" == http* ]]; then
             temp_dir="$(mktemp -d)"
             wget -qO "$temp_dir/crd.yaml" "$crd"
@@ -180,7 +180,7 @@ function main()
     fi
 }
 
-CRD2JSONSCHEMA_VERSION="1.0.2"
+CRD2JSONSCHEMA_VERSION="1.0.3"
 export CRD2JSONSCHEMA_VERSION
 
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]
