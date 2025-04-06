@@ -73,9 +73,7 @@ function get_jsonschema_file_name()
     crd_kind="$(get_crd_kind "$crd")" || exit 1
     local crd_version
     crd_version="$(get_crd_version "$crd")" || exit 1
-    local crd_group
-    crd_group="$(get_crd_group "$crd")" || exit 1
-    echo "${crd_kind}_${crd_group}_${crd_version}.json"
+    echo "${crd_kind}_${crd_version}.json"
 }
 
 function convert_to_strict_json()
@@ -105,14 +103,16 @@ function create_all_jsonschema()
 {
     local all_jsonschema
     all_jsonschema="$(yq -e -o json -I 4 -n '{"oneOf": []}')"
-    local crd_filenames
-    crd_filenames=("$@")
-    for crd_filename in "${crd_filenames[@]}"
+    local crds jsonschema_filename group
+    crds=("$@")
+    for crd in "${crds[@]}"
     do
+        jsonschema_filename=$(get_jsonschema_file_name "$crd")
+        group=$(get_crd_group "$crd")
         # shellcheck disable=SC2016
         all_jsonschema="$(
             echo "$all_jsonschema" | \
-            file="$crd_filename" yq -e -o json -I 4 '.oneOf += {"$ref": strenv(file)}'
+            file="$group/$jsonschema_filename" yq -e -o json -I 4 '.oneOf += {"$ref": strenv(file)}'
         )"
     done
     echo "$all_jsonschema"
@@ -154,8 +154,9 @@ function main()
         cli_help; exit 0
     fi
 
-    local crd_filenames=()
+    local crds=()
     local current_crd
+    local group
     for crd in "$@"
     do
         if [[ "$crd" == http* ]]; then
@@ -168,15 +169,17 @@ function main()
 
         if [[ -d "${OUTPUT_DIR-}" ]]; then
             json_schema_filename="$(get_jsonschema_file_name "$current_crd")"
-            crd_filenames+=("$json_schema_filename")
-            convert_crd_openapiv3_schema_to_jsonschema "$current_crd" > "$OUTPUT_DIR/$json_schema_filename"
+            group="$(get_crd_group "$current_crd")"
+            crds+=("$current_crd")
+            mkdir "$OUTPUT_DIR/$group"
+            convert_crd_openapiv3_schema_to_jsonschema "$current_crd" > "$OUTPUT_DIR/$group/$json_schema_filename"
         else
             convert_crd_openapiv3_schema_to_jsonschema "$current_crd"
         fi
     done
 
     if [[ -d "${OUTPUT_DIR-}" && -n "${CREATE_ALL_JSON-}" ]]; then
-        create_all_jsonschema "${crd_filenames[@]}" > "$OUTPUT_DIR/all.json"
+        create_all_jsonschema "${crds[@]}" > "$OUTPUT_DIR/all.json"
     fi
 }
 
