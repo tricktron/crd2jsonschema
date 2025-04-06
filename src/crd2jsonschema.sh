@@ -171,7 +171,7 @@ function main()
             json_schema_filename="$(get_jsonschema_file_name "$current_crd")"
             group="$(get_crd_group "$current_crd")"
             crds+=("$current_crd")
-            mkdir "$OUTPUT_DIR/$group"
+            mkdir -p "$OUTPUT_DIR/$group"
             convert_crd_openapiv3_schema_to_jsonschema "$current_crd" > "$OUTPUT_DIR/$group/$json_schema_filename"
         else
             convert_crd_openapiv3_schema_to_jsonschema "$current_crd"
