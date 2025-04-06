@@ -78,7 +78,7 @@
                     program = "${pkgs.writeShellApplication
                     {
                         name          = "dockerIntegrationTest.sh";
-                        runtimeInputs = with pkgs; [ docker ];
+                        runtimeInputs = with pkgs; [ docker ] ++ [ pkgs-fork.bashunit ];
                         text          =
                         ''
                             ${self.packages.${system}.crd2jsonschema-amd64-image} | docker load
@@ -86,10 +86,10 @@
                                 https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
                             docker run -v "$(pwd)":/app ${name}:${version} -a -o out \
                                 tests/fixtures/*.crd.yml
-                            cat out/route.openshift.io/route_v1.json
+                            bashunit --assert files_equals \
+                                tests/fixtures/expected-openshift-route-jsonschema4.json \
+                                out/route.openshift.io/route_v1.json
                             cat out/all.json
-                            rm out/route.openshift.io/route_v1.json
-                            rm out/all.json
                         '';
                     }}/bin/dockerIntegrationTest.sh";
                 };
