@@ -37,7 +37,7 @@ function test_should_create_kind_group_version.json_file_name_from_CRD_metadata(
 
     filename=$(get_jsonschema_file_name "$ROOT_DIR/tests/fixtures/openshift-route-v1.crd.yml")
 
-    assert_same "route_route.openshift.io_v1.json" "$filename"
+    assert_same "route_v1.json" "$filename"
 }
 
 function test_should_exit_if_crd_has_no_names.singular_metadata()

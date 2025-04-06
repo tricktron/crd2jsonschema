@@ -1,10 +1,10 @@
 {
     "oneOf": [
         {
-            "$ref": "sealedsecret_bitnami.com_v1alpha1.json"
+            "$ref": "bitnami.com/sealedsecret_v1alpha1.json"
         },
         {
-            "$ref": "route_route.openshift.io_v1.json"
+            "$ref": "route.openshift.io/route_v1.json"
         }
     ]
 }

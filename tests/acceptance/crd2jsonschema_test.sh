@@ -70,10 +70,9 @@ function test_should_convert_single_OpenAPI_V3_YAML_CRD_to_JSON_schema_and_write
 {
     $SCRIPT -o "$TEMP_DIR" "$ROOT_DIR/tests/fixtures/openshift-route-v1.crd.yml"
 
-    assert_file_exists "$TEMP_DIR/route_route.openshift.io_v1.json"
-    assert_file_not_exists "$TEMP_DIR/all.json"
+    assert_file_exists "$TEMP_DIR/route.openshift.io/route_v1.json"
     assert_files_equals "$ROOT_DIR/tests/fixtures/expected-openshift-route-jsonschema4.json" \
-        "$TEMP_DIR/route_route.openshift.io_v1.json"
+        "$TEMP_DIR/route.openshift.io/route_v1.json"
 }
 
 function test_should_exit_if_output_directory_does_not_exist()
@@ -116,20 +115,19 @@ function test_should_convert_multiple_OpenAPI_V3_YAML_CRDs_to_JSON_schema_and_wr
 {
     $SCRIPT -o "$TEMP_DIR" "$ROOT_DIR/tests/fixtures/openshift-route-v1.crd.yml" \
         "$ROOT_DIR/tests/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml"
-    cat "$TEMP_DIR/route_route.openshift.io_v1.json"
-    assert_file_exists "$TEMP_DIR/route_route.openshift.io_v1.json"
-    assert_file_exists "$TEMP_DIR/sealedsecret_bitnami.com_v1alpha1.json"
+    assert_file_exists "$TEMP_DIR/route.openshift.io/route_v1.json"
+    assert_file_exists "$TEMP_DIR/bitnami.com/sealedsecret_v1alpha1.json"
     assert_files_equals "$ROOT_DIR/tests/fixtures/expected-openshift-route-jsonschema4.json" \
-        "$TEMP_DIR/route_route.openshift.io_v1.json"
+        "$TEMP_DIR/route.openshift.io/route_v1.json"
     assert_files_equals "$ROOT_DIR/tests/fixtures/expected-bitnami-sealedsecret-jsonschema4.json" \
-        "$TEMP_DIR/sealedsecret_bitnami.com_v1alpha1.json"
+        "$TEMP_DIR/bitnami.com/sealedsecret_v1alpha1.json"
 }
 
 function test_should_create_all.json_with_single_reference_given_-a_option()
 {
     local expected_all_json
     # shellcheck disable=SC2016
-    expected_all_json="$(yq -o json -I 4 -n '{"oneOf": [{"$ref": "sealedsecret_bitnami.com_v1alpha1.json"}]}')"
+    expected_all_json="$(yq -o json -I 4 -n '{"oneOf": [{"$ref": "bitnami.com/sealedsecret_v1alpha1.json"}]}')"
 
     $SCRIPT -o "$TEMP_DIR" -a "$ROOT_DIR/tests/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml"
 
@@ -142,8 +140,8 @@ function test_should_create_all.json_with_multiple_references_given_-a_option()
     $SCRIPT -o "$TEMP_DIR" -a "$ROOT_DIR/tests/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml" \
         "$ROOT_DIR"/tests/fixtures/openshift-route-v1.crd.yml
 
-    assert_file_exists "$TEMP_DIR"/route_route.openshift.io_v1.json
-    assert_file_exists "$TEMP_DIR"/sealedsecret_bitnami.com_v1alpha1.json
+    assert_file_exists "$TEMP_DIR"/route.openshift.io/route_v1.json
+    assert_file_exists "$TEMP_DIR"/bitnami.com/sealedsecret_v1alpha1.json
     assert_file_exists "$TEMP_DIR"/all.json
     assert_files_equals "$ROOT_DIR/tests/fixtures/expected-multiple-all.json" "$TEMP_DIR/all.json"
 }
@@ -152,9 +150,9 @@ function test_should_convert_long_OpenAPI_V3_YAML_CRD_with_newlines_and_dollar_s
 {
     $SCRIPT -o "$TEMP_DIR" "$ROOT_DIR/tests/fixtures/openshift-ingresscontroller-v1.crd.yml"
 
-    assert_file_exists "$TEMP_DIR/ingresscontroller_operator.openshift.io_v1.json"
+    assert_file_exists "$TEMP_DIR/operator.openshift.io/ingresscontroller_v1.json"
     assert_file_not_exists "$TEMP_DIR/all.json"
     assert_files_equals "$ROOT_DIR/tests/fixtures/expected-openshift-ingresscontroller-v1-jsonschema4.json" \
-        "$TEMP_DIR/ingresscontroller_operator.openshift.io_v1.json"
+        "$TEMP_DIR/operator.openshift.io/ingresscontroller_v1.json"
 }
 
