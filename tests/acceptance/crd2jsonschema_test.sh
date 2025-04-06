@@ -123,6 +123,14 @@ function test_should_convert_multiple_OpenAPI_V3_YAML_CRDs_to_JSON_schema_and_wr
         "$TEMP_DIR/bitnami.com/sealedsecret_v1alpha1.json"
 }
 
+function test_should_convert_multiple_OpenAPI_V3_YAML_CRDs_to_JSON_schema_and_write_to_files_in_given_output_directory_with_same_group()
+{
+    $SCRIPT -o "$TEMP_DIR" "$ROOT_DIR/tests/fixtures/openshift-ingresscontroller-v1.crd.yml" \
+        "$ROOT_DIR/tests/fixtures/openshift-network-v1.crd.yml"
+    assert_file_exists "$TEMP_DIR/operator.openshift.io/ingresscontroller_v1.json"
+    assert_file_exists "$TEMP_DIR/operator.openshift.io/network_v1.json"
+}
+
 function test_should_create_all.json_with_single_reference_given_-a_option()
 {
     local expected_all_json
