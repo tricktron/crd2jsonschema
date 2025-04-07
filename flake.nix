@@ -85,9 +85,9 @@
                             docker run ${name}:${version} \
                                 https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/1f3e4021e27bc92f9881984a2348fe49aaa23727/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
                             docker run -v "$(pwd)":/app ${name}:${version} -a -o out \
-                                tests/fixtures/*.crd.yml
+                                tests/fixtures/openshift-v4.18-route-v1.crd.yml
                             bashunit --assert files_equals \
-                                tests/fixtures/expected-openshift-route-jsonschema4.json \
+                                tests/fixtures/expected-openshift-v4.18-route-jsonschema4.json \
                                 out/route.openshift.io/route_v1.json
                             cat out/all.json
                         '';
