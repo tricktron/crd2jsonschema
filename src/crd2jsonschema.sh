@@ -80,7 +80,7 @@ function get_jsonschema_file_name()
 function convert_to_strict_json()
 {
     yq -e -o json -I 4 '
-        with(.. | select(has("properties")) |
+        with(.. | select(has("properties")) | select(.type == "object") |
         select(has("additionalProperties") | not);
             .additionalProperties = false)
     ' 2>/dev/null
