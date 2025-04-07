@@ -66,6 +66,16 @@ function test_should_convert_single_OpenAPI_V3_YAML_CRD_file_to_JSON_schema_draf
     assert_same "$expected_json_schema" "$json_schema"
 }
 
+function test_should_convert_complex_single_OpenAPI_V3_YAML_CRD_file_to_JSON_schema_draft_4_and_only_make_object_properties_strict()
+{
+    local expected_json_schema json_schema
+    expected_json_schema=$(cat "$ROOT_DIR/tests/fixtures/expected-openshift-v4.18-route-jsonschema4.json")
+
+    json_schema=$($SCRIPT "$ROOT_DIR/tests/fixtures/openshift-v4.18-route-v1.crd.yml")
+
+    assert_same "$expected_json_schema" "$json_schema"
+}
+
 function test_should_convert_single_OpenAPI_V3_YAML_CRD_file_to_non_strict_JSON_schema_draft_4_given_-no-strict_flag()
 {
     local expected_json_schema json_schema
