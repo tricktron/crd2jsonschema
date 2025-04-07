@@ -12,10 +12,11 @@ Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to
 JSON schema draft 4. CRDs can be specified as a file path or as a URL.
 
 Options:
-  -o path   Output directory for JSON schema files
-  -a        Create all.json which references individual files
-  -v        Print the version of crd2jsonschema
-  -h        Print this help
+  -o path     Output directory for JSON schema files
+  -a          Create all.json which references individual files
+  -v          Print the version of crd2jsonschema
+  -h          Print this help
+  --no-strict Disables the default strict mode which reports unknown properties as errors
 
 Examples:
 
@@ -96,7 +97,11 @@ function convert_crd_openapiv3_schema_to_jsonschema()
     crd="$1"
     local crd_schema
     crd_schema="$(get_openapi_v3_schema "$crd")" || exit 1
-    echo "$crd_schema" | convert_to_strict_json | convert_to_jsonschema4
+    if [[ -n "${NO_STRICT-}" ]]; then
+        echo "$crd_schema" | yq -e -o json -I 4 '.' | convert_to_jsonschema4
+    else
+        echo "$crd_schema" | convert_to_strict_json | convert_to_jsonschema4
+    fi
 }
 
 function create_all_jsonschema()
@@ -123,35 +128,52 @@ function main()
 {
     local OUTPUT_DIR
     local CREATE_ALL_JSON
-    while getopts :o:vha option
-    do
-    case "$option" in
-        o)
-            OUTPUT_DIR="$OPTARG"
-            if [[ ! -d "${OUTPUT_DIR}" ]]; then
-                printf "\nOutput directory does not exist: %s\n" "$OUTPUT_DIR" >&2
+    local NO_STRICT
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -o|--output)
+                OUTPUT_DIR="$2"
+                if [[ ! -d "${OUTPUT_DIR}" ]]; then
+                    printf "\nOutput directory does not exist: %s\n" "$OUTPUT_DIR" >&2
+                    exit 1
+                fi
+                shift 2
+                ;;
+            -a|--all)
+                CREATE_ALL_JSON=1
+                shift
+                ;;
+            --no-strict)
+                NO_STRICT=1
+                shift
+                ;;
+            -v|--version)
+                echo "crd2jsonschema version $CRD2JSONSCHEMA_VERSION"
+                exit 0
+                ;;
+            -h|--help)
+                cli_help
+                exit 0
+                ;;
+            --) # End of options
+                shift
+                break
+                ;;
+            -*) # Unknown option
+                printf "\nOption does not exist : %s\n" "$1" >&2
+                cli_help
                 exit 1
-            fi
-            ;;
-        a)
-            CREATE_ALL_JSON=1
-            ;;
-        v)
-            echo "crd2jsonschema version $CRD2JSONSCHEMA_VERSION"; exit 0
-            ;;
-        h)
-            cli_help; exit 0
-            ;;
-        \?)
-            printf "\nOption does not exist : %s\n" "$1" >&2; cli_help; exit 1
-            ;;
-    esac
+                ;;
+            *) # End of options
+                break
+                ;;
+        esac
     done
 
-    shift $((OPTIND-1))
-
     if [[ "$#" -eq 0 ]]; then
-        cli_help; exit 0
+        cli_help
+        exit 0
     fi
 
     local crds=()
