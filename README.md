@@ -16,10 +16,11 @@ Convert Kubernetes Custom Resource Definitions (CRDs) OpenAPI V3.0 schemas to
 JSON schema draft 4. CRDs can be specified as a file path or as a URL.
 
 Options:
-  -o path   Output directory for JSON schema files
-  -a        Create all.json which references individual files
-  -v        Print the version of crd2jsonschema
-  -h        Print this help
+  -o path     Output directory for JSON schema files
+  -a          Create all.json which references individual files
+  -v          Print the version of crd2jsonschema
+  -h          Print this help
+  --no-strict Disables the default strict mode which reports unknown properties as errors
 
 Examples:
 
