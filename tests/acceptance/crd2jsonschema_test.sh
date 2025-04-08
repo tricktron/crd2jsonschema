@@ -95,6 +95,18 @@ function test_should_convert_single_OpenAPI_V3_YAML_CRD_to_JSON_schema_and_write
         "$TEMP_DIR/route.openshift.io/route_v1.json"
 }
 
+function test_should_convert_single_OpenAPI_V3_YAML_CRD_with_multiple_versions_to_multiple_JSON_schemas_and_write_to_file_in_given_output_directory()
+{
+    $SCRIPT -o "$TEMP_DIR" "$ROOT_DIR/tests/fixtures/tekton-task-with-multiple-versions.crd.yml"
+
+    assert_file_exists "$TEMP_DIR/tekton.dev/task_v1.json"
+    assert_file_exists "$TEMP_DIR/tekton.dev/task_v1beta1.json"
+    assert_files_equals "$ROOT_DIR/tests/fixtures/expected-tekton-task-v1-jsonschema.json" \
+        "$TEMP_DIR/tekton.dev/task_v1.json"
+    assert_files_equals "$ROOT_DIR/tests/fixtures/expected-tekton-task-v1beta1-jsonschema.json" \
+        "$TEMP_DIR/tekton.dev/task_v1beta1.json"
+}
+
 function test_should_exit_if_output_directory_does_not_exist()
 {
     assert_exit_code "1" "$($SCRIPT -o "$TEMP_DIR/non-existing")"
@@ -128,7 +140,7 @@ function test_should_convert_multiple_OpenAPI_V3_YAML_CRDs_to_JSON_schema_draft_
     json_schemas=$($SCRIPT "$ROOT_DIR/tests/fixtures/openshift-route-v1.crd.yml" \
         "$ROOT_DIR/tests/fixtures/bitnami-sealedsecret-v1alpha1.crd.yml")
 
-    assert_same "$expected_json_schemas" "$json_schemas"
+    assert_equals "$expected_json_schemas" "$json_schemas"
 }
 
 function test_should_convert_multiple_OpenAPI_V3_YAML_CRDs_to_JSON_schema_and_write_to_files_in_given_output_directory()

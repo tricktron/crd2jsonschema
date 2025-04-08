@@ -36,9 +36,10 @@ EOF
 
 function get_openapi_v3_schema()
 {
-    local crd
+    local crd version_index
+    version_index="${2:-0}"
     crd="$1"
-    yq -e '.spec.versions[0].schema.openAPIV3Schema' "$crd" 2>/dev/null || \
+    yq -e ".spec.versions[$version_index].schema.openAPIV3Schema" "$crd" 2>/dev/null || \
         { echo "OpenAPI V3 schema not found. Is $crd a valid CRD?" >&2; exit 1; }
 }
 
@@ -52,10 +53,19 @@ function get_crd_kind()
 
 function get_crd_version()
 {
+    local crd version_index
+    version_index="${2:-0}"
+    crd="$1"
+    yq -e ".spec.versions[$version_index].name" "$crd" 2>/dev/null || \
+        { echo ".spec.versions[0].name not found. Is $crd a valid CRD?" >&2; exit 1; }
+}
+
+function get_crd_versions_count()
+{
     local crd
     crd="$1"
-    yq -e '.spec.versions[0].name' "$crd" 2>/dev/null || \
-        { echo ".spec.versions[0].name not found. Is $crd a valid CRD?" >&2; exit 1; }
+    yq -e '.spec.versions | length' "$crd" 2>/dev/null || \
+        { echo "Could not determine number of versions. Is $crd a valid CRD?" >&2; exit 1; }
 }
 
 function get_crd_group()
@@ -68,12 +78,13 @@ function get_crd_group()
 
 function get_jsonschema_file_name()
 {
-    local crd
+    local crd version_index
     crd="$1"
+    version_index="${2:-0}"
     local crd_kind
     crd_kind="$(get_crd_kind "$crd")" || exit 1
     local crd_version
-    crd_version="$(get_crd_version "$crd")" || exit 1
+    crd_version="$(get_crd_version "$crd" "$version_index")" || exit 1
     echo "${crd_kind}_${crd_version}.json"
 }
 
@@ -93,10 +104,11 @@ function convert_to_jsonschema4()
 
 function convert_crd_openapiv3_schema_to_jsonschema()
 {
-    local crd
+    local crd version_index
     crd="$1"
+    version_index="${2:-0}"
     local crd_schema
-    crd_schema="$(get_openapi_v3_schema "$crd")" || exit 1
+    crd_schema="$(get_openapi_v3_schema "$crd" "$version_index")" || exit 1
     if [[ -n "${NO_STRICT-}" ]]; then
         echo "$crd_schema" | yq -e -o json -I 4 '.' | convert_to_jsonschema4
     else
@@ -108,21 +120,46 @@ function create_all_jsonschema()
 {
     local all_jsonschema
     all_jsonschema="$(yq -e -o json -I 4 -n '{"oneOf": []}')"
-    local crds jsonschema_filename group
-    crds=("$@")
-    for crd in "${crds[@]}"
+    local schemes=("$@")
+    for scheme in "${schemes[@]}"
     do
-        jsonschema_filename=$(get_jsonschema_file_name "$crd")
-        group=$(get_crd_group "$crd")
         # shellcheck disable=SC2016
         all_jsonschema="$(
             echo "$all_jsonschema" | \
-            file="$group/$jsonschema_filename" yq -e -o json -I 4 '.oneOf += {"$ref": strenv(file)}'
+            file="$scheme" yq -e -o json -I 4 '.oneOf += {"$ref": strenv(file)}'
         )"
     done
     echo "$all_jsonschema"
 }
 
+function process_crd()
+{
+    local crd output_dir
+    crd="$1"
+    output_dir="${2:-}"
+
+    local versions_count
+    versions_count=$(get_crd_versions_count "$crd")
+    local group
+    group="$(get_crd_group "$crd")"
+    local refs=()
+
+    for ((i=0; i<versions_count; i++)); do
+        local json_schema_filename
+        json_schema_filename="$(get_jsonschema_file_name "$crd" "$i")"
+
+        if [[ -n "$output_dir" ]]; then
+            mkdir -p "$output_dir/$group"
+            local output_path="$output_dir/$group/$json_schema_filename"
+            convert_crd_openapiv3_schema_to_jsonschema "$crd" "$i" > "$output_path"
+            refs+=("$group/$json_schema_filename")
+        else
+            convert_crd_openapiv3_schema_to_jsonschema "$crd" "$i"
+        fi
+    done
+
+    printf "%s\n" "${refs[@]}"
+}
 
 function main()
 {
@@ -176,33 +213,28 @@ function main()
         exit 0
     fi
 
-    local crds=()
-    local current_crd
-    local group
-    for crd in "$@"
-    do
-        if [[ "$crd" == http* ]]; then
-            temp_dir="$(mktemp -d)"
-            wget -qO "$temp_dir/crd.yaml" "$crd"
-            current_crd="$temp_dir/crd.yaml"
-        else
-            current_crd="$crd"
-        fi
+    local all_refs=()
+        for crd in "$@"
+        do
+            if [[ "$crd" == http* ]]; then
+                temp_dir="$(mktemp -d)"
+                wget -qO "$temp_dir/crd.yaml" "$crd"
+                current_crd="$temp_dir/crd.yaml"
+            else
+                current_crd="$crd"
+            fi
 
-        if [[ -d "${OUTPUT_DIR-}" ]]; then
-            json_schema_filename="$(get_jsonschema_file_name "$current_crd")"
-            group="$(get_crd_group "$current_crd")"
-            crds+=("$current_crd")
-            mkdir -p "$OUTPUT_DIR/$group"
-            convert_crd_openapiv3_schema_to_jsonschema "$current_crd" > "$OUTPUT_DIR/$group/$json_schema_filename"
-        else
-            convert_crd_openapiv3_schema_to_jsonschema "$current_crd"
-        fi
-    done
+            if [[ -d "${OUTPUT_DIR-}" && -n "${CREATE_ALL_JSON-}" ]]; then
+                readarray -t refs < <(process_crd "$current_crd" "$OUTPUT_DIR")
+                all_refs+=("${refs[@]}")
+            else
+                process_crd "$current_crd" "${OUTPUT_DIR-}"
+            fi
+        done
 
-    if [[ -d "${OUTPUT_DIR-}" && -n "${CREATE_ALL_JSON-}" ]]; then
-        create_all_jsonschema "${crds[@]}" > "$OUTPUT_DIR/all.json"
-    fi
+        if [[ -d "${OUTPUT_DIR-}" && -n "${CREATE_ALL_JSON-}" ]]; then
+            create_all_jsonschema "${all_refs[@]}" > "$OUTPUT_DIR/all.json"
+        fi
 }
 
 CRD2JSONSCHEMA_VERSION="1.1.1"

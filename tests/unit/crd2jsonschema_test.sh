@@ -51,7 +51,6 @@ function test_should_exit_if_crd_has_no_names.singular_metadata()
     assert_same ".spec.names.singular not found. Is $crd_without_kind a valid CRD?" "$error"
 }
 
-
 function test_should_exit_if_crd_has_no_version_metadata()
 {
     local crd_without_version error
@@ -71,7 +70,6 @@ function test_should_exit_if_crd_has_no_group_metadata()
     error=$( (get_crd_group "$crd_without_group" 2>&1 >/dev/null) || true )
     assert_same ".spec.group not found. Is $crd_without_group a valid CRD?" "$error"
 }
-
 
 function test_should_exit_if_crd_has_no_OpenAPI_V3_schema()
 {
